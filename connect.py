@@ -5,6 +5,7 @@ import telnetlib
 import sys
 import sundry as s
 import pprint
+import traceback
 
 
 class ConnSSH(object):
@@ -12,7 +13,9 @@ class ConnSSH(object):
     ssh connect to VersaPLX
     '''
 
-    def __init__(self, host, port, username, password, timeout):
+    def __init__(self, host, port, username, password, timeout,logger):
+        self.logger = logger
+        self.logger.d1 = host
         self._host = host
         self._port = port
         self._timeout = timeout
@@ -21,31 +24,61 @@ class ConnSSH(object):
         self.SSHConnection = None
         self.ssh_connect()
 
+
     def _connect(self):
+        # self.logger.write_to_log('INFO','info','','start to connect VersaPLX via SSH')
+        # [time],[transaction_id],[display],[type_level1],[type_level2],[d1],[d2],[data]
+        # start 
+        # [time],[transaction_id],[-],[DATA],[value],[dict],['data for SSH connect'],[{host:self._host}]
         try:
             objSSHClient = paramiko.SSHClient()
             objSSHClient.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            # self.logger.write_to_log('DATA','input','ssh_connect',[self._host,self._port,self._username,self._password,self._timeout])  #怎么记
+            # log : SSH_connect [host,port,username,password,timeout]
             objSSHClient.connect(self._host, port=self._port,
                                  username=self._username,
                                  password=self._password,
                                  timeout=self._timeout)
+            # 如何验证SSH连接成功
+            # log : SSH_connect_result [T/F]
+            # self.logger.write_to_log('DATA','output','ssh_connect','SSH SUCCESS')
             self.SSHConnection = objSSHClient
+            # info start
         except Exception as e:
-            s.pe(f'Connect to {self._host} failed with error: {e}')
+            # self.logger.write_to_log('INFO', 'error', '', (str(traceback.format_exc())))
+            # [time],[transaction_id],[display],[type_level1],[type_level2],[d1],[d2],[data]
+            # [time],[transaction_id],[s],[INFO],[error],[exit],[d2],['ssh connect failed with error {e}']
+            # [time],[transaction_id],[-],[DATA],[debug],[exception],[d2],[str(traceback.format_exc())]
+            pass
+            # s.pwe(self.logger,f'Connect to {self._host} failed with error: {e}')
 
-    def excute_command(self, command):
+    def execute_command(self, command):
+        '1, o and data; 2, x and err;'
+
+        # self.logger.write_to_log('DATA','input','cmd',command)
+        # [time],[transaction_id],[display],[type_level1],[type_level2],[d1],[d2],[data]
+        # [time],[transaction_id],[display],[OPRT],[cmd],[ssh],[oprt_id],[command]
         stdin, stdout, stderr = self.SSHConnection.exec_command(command)
         data = stdout.read()
         if len(data) > 0:
-            return data
+            output = {'sts':1, 'rst':data}
+            # self.logger.write_to_log('DATA','output',command,(1,data))
+            # [time],[transaction_id],[-],[DATA],[cmd],[ssh],[oprt_id],[output]
+            return output
 
         err = stderr.read()
         if len(err) > 0:
-            print(err.strip())
-            return err
+            output = {'sts':0, 'rst':err}
+            # print(err.strip())
+            # [time],[transaction_id],[display],[type_level1],[type_level2],[d1],[d2],[data]
+            # [time],[transaction_id],[s],[INFO],[warning],[failed],[d2],[f{command {command} execute failed }]
+            # [time],[transaction_id],[-],[DATA],[cmd],[ssh],[oprt_id],[output]
+            return output
 
         if data == b'':
-            return True
+            self.logger.write_to_log('DATA','output',command,(3, ''))
+            ###
+            return {'sts':1, 'rst':data}
 
     def ssh_connect(self):
         self._connect()
@@ -54,6 +87,7 @@ class ConnSSH(object):
 
     def close(self):
         self.SSHConnection.close()
+        self.logger.write_to_log('INFO', 'info', '', 'Close SSH connection')
 
 
 class ConnTelnet(object):
@@ -61,7 +95,8 @@ class ConnTelnet(object):
     telnet connect to NetApp 
     '''
 
-    def __init__(self, host, port, username, password, timeout):
+    def __init__(self, host, port, username, password, timeout,logger):
+        self.logger = logger
         self._host = host
         self._port = port
         self._username = username
@@ -72,19 +107,44 @@ class ConnTelnet(object):
 
     def _connect(self):
         try:
+<<<<<<< HEAD
             self.telnet.open(self._host, self._port, self._timeout)
             self.telnet.read_until(b'Username:', timeout=1)
             self.telnet.write(self._username.encode() + b'\n')
             self.telnet.read_until(b'Password:', timeout=1)
+=======
+            # self.logger.write_to_log('INFO','info','','start to connect VersaPLX via telnet')
+            # log : telnet_open
+            self.telnet.open(self._host, self._port)
+            # self.logger.write_to_log('DATA', 'input', 'telnet_open', (self._host, self._port))
+            # log: telnet_open_result 这个有没有结果的
+            # log : username
+            date_read1 =  self.telnet.read_until(b'Username:', timeout=1)
+            # self.logger.write_to_log('DATA','output','telnet_read_until',date_read1)
+            # self.logger.write_to_log('DATA','input','telnet_write',self._username.encode() + b'\n')
+            self.telnet.write(self._username.encode() + b'\n')
+            # 写入之后的结果怎么判断，
+
+            date_read2 = self.telnet.read_until(b'Password:', timeout=1)
+            # self.logger.write_to_log('DATA','output','telnet_read_until',date_read2)
+            # self.logger.write_to_log('DATA','input','telnet_write',self._password.encode() + b'\n')
+>>>>>>> bd19a25ce1d7254f20069d889832c248adcea09b
             self.telnet.write(self._password.encode() + b'\n')
 
         except Exception as e:
-            s.pe(f'Connect to {self._host} failed with error: {e}')
+            self.logger.write_to_log('INFO', 'error', '', (str(traceback.format_exc())))
+            s.pwe(self.logger,f'Connect to {self._host} failed with error: {e}')
 
     # 定义exctCMD函数,用于执行命令
-    def excute_command(self, cmd):
+    def execute_command(self, cmd):
+        # log: NetApp_ex_cmd
+        # self.logger.write_to_log('DATA','input','cmd',cmd.encode().strip() + b'\r')
+        # [time],[transaction_id],[s],[OPRT],[cmd],[telnet],[oprt_id],[lc_cmd]
         self.telnet.write(cmd.encode().strip() + b'\r')
+        # 命令的结果的记录？
+        # self.logger.write_to_log('Telnet','telnet_ex_cmd','','time_sleep:0.25')
         time.sleep(0.25)
+<<<<<<< HEAD
         rely = self.telnet.read_very_eager().decode()
         return rely
 
@@ -92,12 +152,18 @@ class ConnTelnet(object):
         self._connect()
         if not self.telnet:
             self._connect()
+=======
+        rely = self.telnet.read_very_eager().decode()# ?
+        # [time],[transaction_id],[s],[DATA],[cmd],[telnet],[oprt_id],[telnet_output]
+        # self.logger.write_to_log('Telnet',)
+>>>>>>> bd19a25ce1d7254f20069d889832c248adcea09b
 
     def close(self):
         self.telnet.close()
-
+        self.logger.write_to_log('INFO', 'info', '', 'Close Telnet connection.')
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     # telnet
     host = '10.203.1.231'
     port = '22'
@@ -106,12 +172,26 @@ if __name__ == '__main__':
     timeout = 5
     ssh = ConnSSH(host, port, username, password, timeout)
     strout = ssh.excute_command('?')
+=======
+# telnet
+    host='10.203.1.231'
+    port='22'
+    username='root'
+    password='Feixi@123'
+    timeout=5
+    ssh=ConnSSH(host, port, username, password, timeout)
+    strout=ssh.execute_command('?')
+>>>>>>> bd19a25ce1d7254f20069d889832c248adcea09b
     w = strout.decode('utf-8')
     print(type(w))
     print(w.split('\n'))
     pprint.pprint(w)
     time.sleep(2)
+<<<<<<< HEAD
     strout = ssh.excute_command('lun show -m')
+=======
+    strout=ssh.execute_command('lun show -m')
+>>>>>>> bd19a25ce1d7254f20069d889832c248adcea09b
     pprint.pprint(strout)
 
     # telnet

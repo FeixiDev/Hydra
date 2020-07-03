@@ -1,12 +1,17 @@
-
 #  coding: utf-8
 import sys
 import re
+import time
+import os
+import getpass
+import traceback
+import socket
 
 
 def pe(print_str):
     'print and exit'
     print(print_str)
+    logger.write_to_log('INFO','info','exit',print_str)
     sys.exit()
 
 
@@ -18,8 +23,6 @@ def iscsi_about(re_string, result):
     re_str = re.compile(re_string)
     re_result = re_str.findall(result)
     if re_result:
-        return True
-
 
 def iscsi_login(ip, login_result):
     re_string = f'Login to.*portal: {ip}.*successful'
@@ -117,3 +120,12 @@ class GetDiskPath(object):
                 pe(f'Did not find the new LUN from {self.target}')
         else:
             pe(f'Command "lsscsi" failed on {self.target}')
+
+def get_disk_dev(lun_id, re_string, lsscsi_result, dev_label,logger):
+    '''
+    Use re to get the blk_dev_name through lun_id
+    '''
+    # print(lsscsi_result)
+    # self.logger.write_to_log('GetDiskPath','host','find_device',self.logger.host)
+    re_find_path_via_id = re.compile(re_string)
+    # self.logger.write_to_log('GetDiskPath','regular_before','find_device',lsscsi_result)

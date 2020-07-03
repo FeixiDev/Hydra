@@ -1,11 +1,13 @@
 #  coding: utf-8
-import storage
-import vplx
-import host_initiator
 import argparse
 import sys
 import time
 
+import storage
+import vplx
+import host_initiator
+import sundry
+import log
 
 class HydraArgParse():
     '''
@@ -14,6 +16,8 @@ class HydraArgParse():
     '''
 
     def __init__(self):
+        self.transaction_id = sundry.get_transaction_id()
+        self.logger = log.Log(self.transaction_id)
         self.argparse_init()
 
     def argparse_init(self):
@@ -33,21 +37,19 @@ class HydraArgParse():
             '-id',
             action="store",
             dest="id_range",
-            help='The ID range of test, split with ","')
+            help='ID or ID range(split with ",")')
 
-    def _storage(self, unique_id, unique_str):
+    def _storage(self):
         '''
-        Connect to NetApp Storage
-        Create LUN and Map to VersaPLX
+        Connect to NetApp Storage, Create LUN and Map to VersaPLX
         '''
-        netapp = storage.Storage(unique_id, unique_str)
+        netapp = storage.Storage(self.logger)
         netapp.lun_create()
         netapp.lun_map()
 
-    def _vplx_drbd(self, unique_id, unique_str):
+    def _vplx_drbd(self):
         '''
-        Connect to VersaPLX
-        Go on DRDB resource configuration
+        Connect to VersaPLX, Config DRDB resource
         '''
         drbd = vplx.VplxDrbd(unique_id, unique_str)
         drbd.start_discover()
@@ -55,21 +57,20 @@ class HydraArgParse():
         drbd.drbd_cfg()
         drbd.drbd_status_verify()
 
-    def _vplx_crm(self, unique_id, unique_str):
+    def _vplx_crm(self):
         '''
-        Connect to VersaPLX
-        Go on crm configuration
+        Connect to VersaPLX, Config iSCSI Target
         '''
-        crm = vplx.VplxCrm(unique_id, unique_str)
+        crm = vplx.VplxCrm(self.logger)
         crm.crm_cfg()
 
-    def _host_test(self, unique_id):
+    def _host_test(self):
         '''
         Connect to host
         Umount and start to format, write, and read iSCSI LUN
         '''
-        host = host_initiator.HostTest(unique_id)
-        host.ssh.excute_command('umount /mnt')
+        host = host_initiator.HostTest(self.logger)
+        # host.ssh.execute_command('umount /mnt')
         host.start_test()
 
     def _stor_del(self, unique_str, unique_id):
@@ -95,10 +96,16 @@ class HydraArgParse():
         self._vplx_retry(uniq_str, list_id)
 
     def run(self):
+        if sys.argv:
+            path = sundry.get_path()
+            cmd = ' '.join(sys.argv)
+            # self.logger.write_to_log('DATA', 'input', 'user_input', cmd)
+            # [time],[transaction_id],[display],[type_level1],[type_level2],[d1],[d2],[data]
+            # [time],[transaction_id],[s],[DATA],[input],[user_input],[cmd],[f{cmd}]
+
         args = self.parser.parse_args()
-        '''
-        uniq_str: The unique string for this test, affects related naming
-        '''
+
+        # uniq_str: The unique string for this test, affects related naming
         if args.uniq_str:
             if not args.delete:
                 if args.id_range:
@@ -134,6 +141,7 @@ class HydraArgParse():
                 else:
                     self.start_all_del(args.uniq_str)
         else:
+            # self.logger.write_to_log('INFO','info','','print_help') 
             self.parser.print_help()
 
 
