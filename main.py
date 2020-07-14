@@ -103,69 +103,26 @@ class HydraArgParse():
         host.start_test()
         print('------* host_test end *------')
 
-    def normal_execute(self, id, string):
-        self.transaction_id = sundry.get_transaction_id()
-        self.logger = log.Log(self.transaction_id)
-        self.logger.write_to_log('F', 'DATA', 'STR', 'Start a new trasaction', '', f'{id}')
-        self.logger.write_to_log('F', 'DATA', 'STR', 'unique_str', '', f'{string}')
-        storage._RPL = 'no'
-        vplx._RPL = 'no'
-        host_initiator._RPL = 'no'
-        self.execute(id, string)
-
-    def replay_execute(self, tid):
-        db = logdb.LogDB()
-        db.get_logdb()
-        _string, _id = db.get_string_id(tid)
-        vplx._RPL = 'yes'
-        storage._RPL = 'yes'
-        host_initiator._RPL = 'yes'
-        vplx._TID = tid
-        storage._TID = tid
-        host_initiator._TID = tid
-        consts._init()  # 初始化一个全局变量：ID
-        consts.set_value('LOG_SWITCH', 'OFF')
-        self.execute(_id, _string)
-
     def execute(self, dict_args,list_tid = None):
         for id_one,str_one in dict_args.items():
             consts.set_value('id_one',id_one)
             consts.set_value('str_one',str_one)
+            print("id_one:",id_one)
+            print("str_one:",str_one)
             self.transaction_id = sundry.get_transaction_id()
             self.logger = log.Log(self.transaction_id)
+            print(f'\n======*** Start working for ID {consts.get_id()} ***======')
             self.logger.write_to_log('F', 'DATA', 'STR', 'Start a new trasaction', '', f'{consts.get_id()}')
             self.logger.write_to_log('F', 'DATA', 'STR', 'unique_str', '', f'{consts.get_str()}')
             if list_tid:
-                for tid in list_tid:
-                    consts.set_value('tid',tid)
-                    self._storage()
-                    self._vplx_drbd()
-                    self._vplx_crm()
-                    self._host_test()
-                return
+                tid = list_tid[0]
+                list_tid.remove(tid)
+                consts.set_value('tid', tid)
 
             self._storage()
             self._vplx_drbd()
             self._vplx_crm()
             self._host_test()
-
-
-        # print(f'\n======*** Start working for ID {id} ***======')
-        # self._storage()
-        #
-        #
-        # # 初始化一个全局变量ID
-        # storage._ID = id
-        # storage._STR = string
-        # self._storage()
-        #
-        # vplx._ID = id
-        # vplx._STR = string
-        # self._vplx_drbd()
-        # self._vplx_crm()
-        #
-        # host_initiator._ID = id
-        # self._host_test()
 
     # @sundry.record_exception
     def run(self):
@@ -192,18 +149,6 @@ class HydraArgParse():
             else:
                 self.parser.print_help()
 
-        # if args.uniq_str:
-        #     ids = args.id_range.split(',')
-        #     if len(ids) == 1:
-        #
-        #         self.normal_execute(int(ids[0]), args.uniq_str)
-        #     elif len(ids) == 2:
-        #         id_start, id_end = int(ids[0]), int(ids[1])
-        #         for i in range(id_start, id_end):
-        #             self.normal_execute(i, args.uniq_str)
-        #     else:
-        #         self.parser.print_help()
-
         elif args.replay:
             consts.set_value('RPL','yes')
             consts.set_value('LOG_SWITCH','OFF')
@@ -212,7 +157,6 @@ class HydraArgParse():
             if args.transactionid:
                 string, id = db.get_string_id(args.transactionid)
                 consts.set_value('tid', args.transactionid)
-                print(consts.get_tid())
                 dict_id_str.update({id: string})
                 self.execute(dict_id_str)
                 # self.replay_execute(args.transactionid)
@@ -226,7 +170,6 @@ class HydraArgParse():
                 print('replay help')
 
         else:
-            # self.logger.write_to_log('INFO','info','','print_help')
             self.parser.print_help()
 
 
