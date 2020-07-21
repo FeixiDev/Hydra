@@ -58,21 +58,16 @@ def change_id_str_to_list(id_str):
     id_list = []
     id_range_list = [int(i) for i in id_str.split(',')]
 
-<< << << < HEAD
-if len(id_range_list) not in [1, 2]:
-== == == =
-if len(id_range_list) not in [1, 2]:
-# -m:提示格式
->> >> >> > 03
-c4f15ae79f5f0120ff3c55d3877cbcc62464e2
-pwe('please verify id format')
-elif len(id_range_list) == 1:
-id_ = id_range_list[0]
-id_list = [id_]
-elif len(id_range_list) == 2:
-for id_ in range(id_range_list[0], id_range_list[1] + 1):
-    id_list.append(id_)
-return id_list
+    if len(id_range_list) not in [1, 2]:
+    # -m:提示格式
+        pwe('please verify id format')
+    elif len(id_range_list) == 1:
+        id_ = id_range_list[0]
+        id_list = [id_]
+    elif len(id_range_list) == 2:
+        for id_ in range(id_range_list[0], id_range_list[1] + 1):
+            id_list.append(id_)
+        return id_list
 
 
 # mat:Start to scan SCSI device with normal way
@@ -104,24 +99,17 @@ def scsi_rescan(ssh, mode):
 def get_lsscsi(ssh, func_str, oprt_id):
     logger = consts.glo_log()
 
-<< << << < HEAD
-# print('    Start to list all SCSI device')
-# logger.write_to_log('T', 'INFO', 'info', 'start', oprt_id,
-#                     '    Start to list all SCSI device')
-pwl('Start to get the list of all SCSI device', 2, oprt_id, 'start')
-== == == =
-pwl('Start to get the list of all SCSI device', 2, oprt_id, 'start')
->> >> >> > 03
-c4f15ae79f5f0120ff3c55d3877cbcc62464e2
-cmd_lsscsi = 'lsscsi'
-result_lsscsi = get_ssh_cmd(ssh, func_str, cmd_lsscsi, oprt_id)
-if result_lsscsi['sts']:
-    return result_lsscsi['rst'].decode('utf-8')
-else:
-    # -m:s.pwl
-    print(f'  Command {cmd_lsscsi} execute failed')
-    logger.write_to_log('T', 'INFO', 'warning', 'failed', oprt_id,
-                        f'  Command "{cmd_lsscsi}" execute failed')
+    pwl('Start to get the list of all SCSI device', 2, oprt_id, 'start')
+
+    cmd_lsscsi = 'lsscsi'
+    result_lsscsi = get_ssh_cmd(ssh, func_str, cmd_lsscsi, oprt_id)
+    if result_lsscsi['sts']:
+        return result_lsscsi['rst'].decode('utf-8')
+    else:
+        # -m:s.pwl
+        print(f'  Command {cmd_lsscsi} execute failed')
+        logger.write_to_log('T', 'INFO', 'warning', 'failed', oprt_id,
+                            f'  Command "{cmd_lsscsi}" execute failed')
 
 
 # -m:这代码蠢不,..看你们有没有人指出来
@@ -197,16 +185,13 @@ def pwe(str, level=0):  # -v 修改，添加level
     print_str = '  ' * level + str
     logger = consts.glo_log()
 
-<< << << < HEAD
-== == == =
-# -m:这里也是要调用s.prt还是啥,指定级别,不同地方调用要用不同的级别.
->> >> >> > 03
-c4f15ae79f5f0120ff3c55d3877cbcc62464e2
-print(print_str)
-# print(f'*{print_str:<70}*')
-logger.write_to_log('T', 'INFO', 'error', 'exit', '', print_str)
 
-sys.exit()
+# -m:这里也是要调用s.prt还是啥,指定级别,不同地方调用要用不同的级别.
+    print(print_str)
+    # print(f'*{print_str:<70}*')
+    logger.write_to_log('T', 'INFO', 'error', 'exit', '', print_str)
+
+    sys.exit()
 
 
 def pwce(print_str, log_folder):
