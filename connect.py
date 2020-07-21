@@ -28,7 +28,7 @@ class ConnSSH(object):
 
     def _connect(self):
         oprt_id = s.get_oprt_id()
-        s.pwl('Start to connect via SSH',1,oprt_id,'start')
+        s.pwl('Start to connect via SSH', 1, oprt_id, 'start')
         self.logger.write_to_log('F', 'DATA', 'value', 'dict', 'data for SSH connect',
                                  {'host': self._host, 'port': self._port, 'username': self._username,
                                   'password': self._password})
@@ -65,11 +65,12 @@ class ConnSSH(object):
             output = {'sts': 1, 'rst': data}
             return output
 
+    # pwl
     def ssh_connect(self):
         self._connect()
         if not self.SSHConnection:
             self.logger.write_to_log(
-                'T', 'INFO', 'info', 'start', '', '  Retry connect to VersaPLX via SSH')
+                'T', 'INFO', 'info', 'start', '', f'  Retry connect to {self._host} via SSH')
             self._connect()
 
     def download(self, remotepath, localpath):
@@ -77,6 +78,7 @@ class ConnSSH(object):
             if self._sftp is None:
                 self._sftp = self.SSHConnection.open_sftp()
             self._sftp.get(remotepath, localpath)
+
         try:
             _download()
         except AttributeError as e:
@@ -87,6 +89,7 @@ class ConnSSH(object):
             if self._sftp is None:
                 self._sftp = self.SSHConnection.open_sftp()
             self._sftp.put(localpath, remotepath)
+
         try:
             _upload()
         except AttributeError as E:
@@ -116,7 +119,7 @@ class ConnTelnet(object):
     def _connect(self):
         try:
             oprt_id = s.get_oprt_id()
-            s.pwl('Start to connect NetApp via Telnet',1,oprt_id,'start')
+            s.pwl('Start to connect NetApp via Telnet', 1, oprt_id, 'start')
             self.logger.write_to_log('F', 'DATA', 'value', 'dict', 'data for telnet connect',
                                      {'host': self._host, 'port': self._port, 'username': self._username,
                                       'password': self._password})

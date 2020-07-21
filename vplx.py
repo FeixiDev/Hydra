@@ -27,6 +27,7 @@ def init_ssh():
     else:
         pass
 
+
 def _find_new_disk():
     result_lsscsi = s.get_lsscsi(SSH, 'D37nG6Yi', s.get_oprt_id())
     re_string = r'\:(\d*)\].*NETAPP[ 0-9a-zA-Z._]*(/dev/sd[a-z]{1,3})'
@@ -35,14 +36,15 @@ def _find_new_disk():
     if disk_dev:
         return disk_dev
 
-
+# mat:s.scsi_rescan已经输出打印了，这里不需要输出打印
+## mat:vplx and host function -- get_disk_dev & _find_new_disk
 def get_disk_dev():
     s.scsi_rescan(SSH, 'n')
     disk_dev = _find_new_disk()
     if disk_dev:
         return disk_dev
     else:
-        print('start rescan SCSI disk deeply')
+        # print('start rescan SCSI disk deeply')
         s.scsi_rescan(SSH, 'a')
         disk_dev = _find_new_disk()
         if disk_dev:
@@ -50,13 +52,14 @@ def get_disk_dev():
         else:
             s.pwe('xxx:vplx,get_disk_dev fail')
 
+
 class DebugLog(object):
     def __init__(self):
         init_ssh()
         self.tid = consts.glo_tsc_id()
         self.debug_folder = f'/var/log/{self.tid}_{host}'
         self.dbg = s.DebugLog(SSH, self.debug_folder)
-    
+
     def collect_debug_sys(self):
         cmd_debug_sys = consts.get_cmd_debug_sys(self.debug_folder, host)
         self.dbg.prepare_debug_log(cmd_debug_sys)
@@ -72,8 +75,6 @@ class DebugLog(object):
     def get_all_log(self, folder):
         local_file = f'{folder}/{host}.tar'
         self.dbg.get_debug_log(local_file)
-
-
 
 
 class VplxDrbd(object):
@@ -156,7 +157,7 @@ class VplxDrbd(object):
 
                 s.pwe('fail to prepare drbd config file..')
 
-        s.pwl(f'Create the DRBD config file "{self.res_name}.res"',2,'','finish')
+        s.pwl(f'Create the DRBD config file "{self.res_name}.res"', 2, '', 'finish')
         # print(f'  Config file "{self.res_name}.res" created')
         # self.logger.write_to_log('T', 'INFO', 'info', 'finish', '',
         #                          f'      Create DRBD config file "{self.res_name}.res" done')
@@ -169,7 +170,7 @@ class VplxDrbd(object):
         unique_str = 'usnkegs'
         cmd = f'drbdadm create-md {self.res_name}'
         info_msg = f'Start to Initialize drbd for {self.res_name}'
-        s.pwl(info_msg,3,oprt_id,'start')
+        s.pwl(info_msg, 3, oprt_id, 'start')
         # self.logger.write_to_log(
         #     'T', 'INFO', 'info', 'start', oprt_id, info_msg)
 
@@ -177,7 +178,8 @@ class VplxDrbd(object):
         re_drbd = 'New drbd meta data block successfully created'
         re_result = s.re_findall(re_drbd, init_result['rst'].decode())
         if re_result:
-            s.pwl('Succeed in initializing DRBD resource "{self.res_name}"',3,oprt_id,'finish')
+            s.pwl(
+                'Succeed in initializing DRBD resource "{self.res_name}"', 3, oprt_id, 'finish')
             # print(f'  Resource "{self.res_name}" initialize successful')
             return True
         else:
@@ -193,7 +195,7 @@ class VplxDrbd(object):
         s.pwl(f'Start to bring up DRBD resource "{self.res_name}"', 3, oprt_id, 'start')
         result = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result['sts']:
-            s.pwl(f'Succeed in bringing up DRBD resource "{self.res_name}"',3,oprt_id,'finish')
+            s.pwl(f'Succeed in bringing up DRBD resource "{self.res_name}"', 3, oprt_id, 'finish')
             return True
 
     def _drbd_primary(self):
@@ -203,12 +205,13 @@ class VplxDrbd(object):
         oprt_id = s.get_oprt_id()
         unique_str = '7C4LU6Xr'
         cmd = f'drbdadm primary --force {self.res_name}'
-        s.pwl('Start to initial synchronization for {self.res_name}',3,oprt_id,'start')
+        s.pwl(
+            'Start to initial synchronization for {self.res_name}', 3, oprt_id, 'start')
         # self.logger.write_to_log('T', 'INFO', 'info', 'start', '',
         #                          f'      Start to initial synchronization for {self.res_name}')
         result = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result['sts']:
-            s.pwl(f"Succeed in synchronizing DRBD resource {self.res_name}",3,oprt_id,'finish')
+            s.pwl(f"Succeed in synchronizing DRBD resource {self.res_name}", 3, oprt_id, 'finish')
             # print(f'  Resource {self.res_name} synchronize successfully')
             # self.logger.write_to_log('T', 'INFO', 'info', 'finish', '',
             #                          f'  Resource {self.res_name} synchronize successfully')
@@ -225,7 +228,7 @@ class VplxDrbd(object):
         #     s.pwe(self.logger,f'drbd resource {self.res_name} primary failed')
 
     def drbd_cfg(self):
-        s.pwl('Start to configure DRBD resource',2,'','start')
+        s.pwl('Start to configure DRBD resource', 2, '', 'start')
         # print('Start to config DRBD resource...')
         #
         # self.logger.write_to_log('T', 'INFO', 'info', 'start', '',
@@ -242,7 +245,7 @@ class VplxDrbd(object):
         '''
         oprt_id = s.get_oprt_id()
         cmd = f'drbdadm status {self.res_name}'
-        s.pwl(f'Start to check DRBD resource {self.res_name} status',3,oprt_id,'start')
+        s.pwl(f'Start to check DRBD resource {self.res_name} status', 3, oprt_id, 'start')
         # self.logger.write_to_log(
         #     'T', 'INFO', 'info', 'start', '', '      Start to check DRBD resource status')
         result = s.get_ssh_cmd(SSH, 'By91GFxC', cmd, oprt_id)
@@ -253,7 +256,7 @@ class VplxDrbd(object):
             if re_result:
                 status = re_result[0]
                 if status == 'UpToDate':
-                    s.pwl(f'Succeed in checking DRBD resource "{self.res_name}"',3,oprt_id,'finish')
+                    s.pwl(f'Succeed in checking DRBD resource "{self.res_name}"', 3, oprt_id, 'finish')
                     # print(f'  Resource {self.res_name} DRBD check successfully')
                     # self.logger.write_to_log('T', 'INFO', 'info', 'finish', '',
                     #                          f'  Resource {self.res_name} DRBD check successfully')
@@ -293,7 +296,8 @@ class VplxDrbd(object):
     def get_all_cfgd_drbd(self):
         # get list of all configured crm res
         cmd_drbd_status = 'drbdadm status'
-        show_result = s.get_ssh_cmd(SSH, 'UikYgtM1', cmd_drbd_status, s.get_oprt_id())
+        show_result = s.get_ssh_cmd(
+            SSH, 'UikYgtM1', cmd_drbd_status, s.get_oprt_id())
         # s.dp('drbd show ',show_result)
         if show_result['sts']:
             re_drbd = f'res_\w*_[0-9]{{1,3}}'
@@ -312,6 +316,7 @@ class VplxDrbd(object):
         if drbd_to_del_list:
             for res_name in drbd_to_del_list:
                 self.drbd_del(res_name)
+
 
 class VplxCrm(object):
     def __init__(self):
@@ -360,7 +365,7 @@ class VplxCrm(object):
         oprt_id = s.get_oprt_id()
         unique_str = 'E03YgRBd'
         cmd = f'crm conf colocation {self.colocation_name} inf: {self.lu_name} {target_name}'
-        s.pwl(f'Start to setting up iSCSILogicalUnit resources of colocation',3,oprt_id,'start')
+        s.pwl(f'Start to setting up iSCSILogicalUnit resources of colocation', 3, oprt_id, 'start')
         # self.logger.write_to_log('T', 'INFO', 'info', 'start', oprt_id,
         #                          '      start to setting up iSCSILogicalUnit resources of colocation')
         result_crm = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
@@ -380,7 +385,7 @@ class VplxCrm(object):
         oprt_id = s.get_oprt_id()
         unique_str = '0GHI63jX'
         cmd = f'crm conf order {self.order_name} {target_name} {self.lu_name}'
-        s.pwl(f'Start to setting up iSCSILogicalUnit resources of order',3,oprt_id,'start')
+        s.pwl(f'Start to setting up iSCSILogicalUnit resources of order', 3, oprt_id, 'start')
         # self.logger.write_to_log('T', 'INFO', 'info', 'start', oprt_id,
         #                          '      Start to setting up iSCSILogicalUnit resources of order')
         result_crm = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
@@ -405,7 +410,7 @@ class VplxCrm(object):
         oprt_id = s.get_oprt_id()
         unique_str = 'YnTDsuVX'
         cmd = f'crm res start {self.lu_name}'
-        s.pwl(f'Start up the iSCSILogicalUnit resource {self.lu_name}',3,oprt_id,'start')
+        s.pwl(f'Start up the iSCSILogicalUnit resource {self.lu_name}', 3, oprt_id, 'start')
         # self.logger.write_to_log('T', 'INFO', 'info', 'start', oprt_id,
         #                          f'      Start the iSCSILogicalUnit resource {self.lu_name}')
         result_cmd = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
@@ -428,13 +433,14 @@ class VplxCrm(object):
 
     def _crm_status_check(self, res_name, status):
         cmd_crm_show = f'crm res show {res_name}'
-        result_crm_show = s.get_ssh_cmd(SSH, 'UqmUytK3', cmd_crm_show, s.get_oprt_id())
+        result_crm_show = s.get_ssh_cmd(
+            SSH, 'UqmUytK3', cmd_crm_show, s.get_oprt_id())
         if status == 'running':
             re_running = f'resource {res_name} is running on'
             if s.re_findall(re_running, result_crm_show):
                 return True
         if status == 'stopped':
-            re_stopped = f'resource {res_name} is stopped'  ##################
+            re_stopped = f'resource {res_name} is stopped'
             if s.re_findall(re_running, result_crm_show):
                 return True
 
@@ -514,7 +520,7 @@ class VplxCrm(object):
     #     oprt_id = s.get_oprt_id()
     #     res_show_result = s.get_ssh_cmd(SSH, unique_str, res_show_cmd, oprt_id)
     #     if res_show_result['sts']:
-    #         re_show = 
+    #         re_show =
     #         list_of_all_crm = s.re_findall(
     #             re_show, res_show_result['rst'].decode('utf-8'))
     #         s.dp('out_str',res_show_result['rst'].decode('utf-8'))
@@ -538,7 +544,8 @@ class VplxCrm(object):
     def get_all_cfgd_res(self):
         # get list of all configured crm res
         cmd_crm_res_show = 'crm res show'
-        show_result = s.get_ssh_cmd(SSH, 'IpJhGfVc4', cmd_crm_res_show, s.get_oprt_id())
+        show_result = s.get_ssh_cmd(
+            SSH, 'IpJhGfVc4', cmd_crm_res_show, s.get_oprt_id())
         if show_result['sts']:
             re_crm_res = f'res_\w*_[0-9]{{1,3}}'
             show_result = show_result['rst'].decode('utf-8')

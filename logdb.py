@@ -114,7 +114,7 @@ class LogDB():
         if id_and_oprt_id:
             return id_and_oprt_id
         else:
-            return ('','')
+            return ('', '')
 
     def get_string_id(self, transaction_id):
         sql = f"SELECT data FROM logtable WHERE describe1 = 'Start a new trasaction' and transaction_id = '{transaction_id}'"
@@ -150,19 +150,18 @@ class LogDB():
         sql = f"SELECT data FROM logtable WHERE transaction_id = '{transaction_id}'"
         return self.sql_fetch_one(sql)
 
-    def get_time_via_str(self, transaction_id , str):
+    def get_time_via_str(self, transaction_id, str):
         id_now = consts.glo_id()
         # id_now = 1
         sql = f"SELECT time FROM logtable WHERE transaction_id = '{transaction_id}' and id >= {id_now} and data LIKE '%{str}%'"
         return self.sql_fetch_one(sql)
 
-    def get_time_via_unique_str(self,transaction_id, str):
+    def get_time_via_unique_str(self, transaction_id, str):
         id_now = consts.glo_id()
         # id_now = 1
-        oprt_id = self.find_oprt_id_via_string(transaction_id,str)[1]
+        oprt_id = self.find_oprt_id_via_string(transaction_id, str)[1]
         sql = f"SELECT time FROM logtable WHERE transaction_id = '{transaction_id}' and id >= {id_now} and describe2 = '{oprt_id}'"
         return self.sql_fetch_one(sql)
-
 
     def get_logdb(self):
         self.drop_tb()
@@ -198,6 +197,6 @@ if __name__ == '__main__':
     # print(db.find_oprt_id_via_string('1594878912', 'V9jGOP2v'))
     # print(db.get_string_id('1594963387'))
     # print(db.get_time_via_unique_str('1595209399','jMPFwXy2'))
-    print(db.get_time_via_str('1595209399','123213'))
+    print(db.get_time_via_str('1595209399', '123213'))
     # print(db.get_cmd_via_tid('1594879092'))
     # res = db.get_transaction_id_via_date('2021/07/13 13:45:57','2021/07/13 13:51:55')

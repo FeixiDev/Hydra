@@ -52,13 +52,14 @@ def get_disk_dev():
         else:
             s.pwe('xxx:no new device')
 
+
 class DebugLog(object):
     def __init__(self):
         init_ssh()
         self.tid = consts.glo_tsc_id()
         self.debug_folder = f'/var/log/{self.tid}_{host}'
         self.dbg = s.DebugLog(SSH, self.debug_folder)
-    
+
     def collect_debug_sys(self):
         cmd_debug_sys = consts.get_cmd_debug_sys(self.debug_folder, host)
         self.dbg.prepare_debug_log(cmd_debug_sys)
@@ -66,7 +67,7 @@ class DebugLog(object):
     def get_all_log(self, folder):
         local_file = f'{folder}/{host}.tar'
         self.dbg.get_debug_log(local_file)
-    
+
 
 class HostTest(object):
     '''
@@ -74,7 +75,7 @@ class HostTest(object):
     '''
 
     def __init__(self):
-        
+
         self.logger = consts.glo_log()
         self.rpl = consts.glo_rpl()
         # self.logger.write_to_log(
@@ -111,7 +112,7 @@ class HostTest(object):
             'T', 'INFO', 'info', 'start', oprt_id, f'    Try mount {dev_name} to "/mnt"')
         result_mount = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result_mount['sts']:
-            s.pwl(f'Disk {dev_name} mounted to "/mnt',1,oprt_id,'start')
+            s.pwl(f'Disk {dev_name} mounted to "/mnt', 1, oprt_id, 'start')
             # print(f'    Disk {dev_name} mounted to "/mnt"')
             # self.logger.write_to_log(
             #     'T', 'INFO', 'info', 'finish', oprt_id, f'    Disk {dev_name} mounted to "/mnt"')
@@ -137,7 +138,7 @@ class HostTest(object):
         # self.logger.write_to_log('INFO','info','',f'start to format disk {dev_name} and mount disk {dev_name}')
         cmd = f'mkfs.ext4 {dev_name} -F'
         oprt_id = s.get_oprt_id()
-        s.pwl(f'Start to format {dev_name}',1,oprt_id,'')
+        s.pwl(f'Start to format {dev_name}', 1, oprt_id, '')
         # print(f'    Start to format {dev_name}')
         # self.logger.write_to_log(
         #     'T', 'INFO', 'info', 'start', oprt_id, f'    Start to format {dev_name}')
@@ -164,7 +165,7 @@ class HostTest(object):
         re_result = s.re_findall(re_performance, result_dd)
         oprt_id = s.get_oprt_id()
         self.logger.write_to_log('T', 'OPRT', 'regular', 'findall', oprt_id, {
-                                 re_performance: result_dd})
+            re_performance: result_dd})
         if re_result:
             dd_perf = re_result[0]
             self.logger.write_to_log(
@@ -177,20 +178,20 @@ class HostTest(object):
         '''
         Calling method to read&write test
         '''
-        s.pwl(f'Start speed test',1,'','start')
+        s.pwl(f'Start speed test', 1, '', 'start')
         self.logger.write_to_log(
             'T', 'INFO', 'info', 'start', '', '  Start speed test ... ... ... ... ... ...')
         cmd_dd_write = f'dd if=/dev/zero of={mount_point}/t.dat bs=512k count=16'
         cmd_dd_read = f'dd if={mount_point}/t.dat of=/dev/zero bs=512k count=16'
         # self.logger.write_to_log('INFO', 'info', '', 'start calling method to read&write test')
         write_perf = self._get_dd_perf(cmd_dd_write, unique_str='CwS9LYk0')
-        s.pwl(f'Write Speed: {write_perf}',2,'','finish')
+        s.pwl(f'Write Speed: {write_perf}', 2, '', 'finish')
         # print(f'    Write Speed: {write_perf}')
         # self.logger.write_to_log(
         #     'T', 'INFO', 'info', 'finish', '', f'    Write Speed: {write_perf}')
         time.sleep(0.25)
         read_perf = self._get_dd_perf(cmd_dd_read, unique_str='hsjG0miU')
-        s.pwl(f'Read  Speed: {read_perf}',2,'','finish')
+        s.pwl(f'Read  Speed: {read_perf}', 2, '', 'finish')
         # print(f'    Read  Speed: {read_perf}')
         # self.logger.write_to_log(
         #     'T', 'INFO', 'info', 'finish', '', f'    Read  Speed: {read_perf}')

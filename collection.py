@@ -18,11 +18,13 @@ def get_dbg_stor(folder):
     stor.generate_debug()
     stor.save_log()
 
+
 def get_vplx_debug(folder):
     tid = consts.glo_tsc_id()
     drbd = vplx.VplxDrbd()
     crm = vplx.VplxCrm()
     drbd.get_sys_debug()
+
 
 def get_debug():
     tid = consts.glo_tsc_id()
@@ -34,4 +36,3 @@ def get_debug():
     get_drbd_debug(log_folder)
     get_crm_debug(log_folder)
     get_host_debug(log_folder)
-    

@@ -46,10 +46,11 @@ class DebugLog(object):
 def dp(str, arg):
     print(f'{str}---------------------\n{arg}')
 
+
 def change_id_str_to_list(id_str):
     id_list = []
     id_range_list = [int(i) for i in id_str.split(',')]
-    if len(id_range_list) not in [1,2]:
+    if len(id_range_list) not in [1, 2]:
         pwe('please verify id format')
     elif len(id_range_list) == 1:
         id_ = id_range_list[0]
@@ -58,6 +59,9 @@ def change_id_str_to_list(id_str):
         for id_ in range(id_range_list[0], id_range_list[1] + 1):
             id_list.append(id_)
     return id_list
+
+# mat:Start to scan SCSI device with normal way
+# Start to scan SCSI device in depth（pwl）
 
 
 def scsi_rescan(ssh, mode):
@@ -89,7 +93,7 @@ def get_lsscsi(ssh, func_str, oprt_id):
     # print('    Start to list all SCSI device')
     # logger.write_to_log('T', 'INFO', 'info', 'start', oprt_id,
     #                     '    Start to list all SCSI device')
-    pwl('Start to get the list of all SCSI device',2,oprt_id,'start')
+    pwl('Start to get the list of all SCSI device', 2, oprt_id, 'start')
     cmd_lsscsi = 'lsscsi'
     # result_lsscsi = SSH.execute_command(cmd_lsscsi)
     result_lsscsi = get_ssh_cmd(ssh, func_str, cmd_lsscsi, oprt_id)
@@ -117,6 +121,7 @@ def get_the_disk_with_lun_id(all_disk):
         print(f'no disk device with SCSI ID {lun_id} found')
         logger.write_to_log('T', 'INFO', 'warning', 'failed',
                             '', f'no disk device with SCSI ID {lun_id} found')
+
 
 def get_ssh_cmd(ssh_obj, unique_str, cmd, oprt_id):
     """
@@ -157,6 +162,12 @@ def get_ssh_cmd(ssh_obj, unique_str, cmd, oprt_id):
         change_pointer(db_id)
         return result
 
+# mat:输出错误类信息格式排版
+# mat:对应正常执行的显示信息宽度
+# mat:与pew函数一样闯入level参数，用于缩进显示
+# mat:与pwe合并,根据不同的type写入log，including:
+# 'INFO', 'error', 'exit'..'INFO', 'warning', 'failed'
+
 
 def pwe(print_str):
     """
@@ -165,9 +176,12 @@ def pwe(print_str):
     :param print_str: Strings to be printed and recorded
     """
     logger = consts.glo_log()
+
     print(print_str)
+    # print(f'*{print_str:<70}*')
     logger.write_to_log('T', 'INFO', 'error', 'exit', '', print_str)
     sys.exit()
+
 
 def pwce(print_str):
     """
@@ -183,11 +197,13 @@ def pwce(print_str):
     logger.write_to_log('T', 'DATA', 'clct', '', '', f'Save debug data to file /var/log/{log_file}')
     sys.exit()
 
+
 def _compare(name, name_list):
     if name in name_list:
         return name
-    elif 'res_'+name in name_list:
-        return 'res_'+name
+    elif 'res_' + name in name_list:
+        return 'res_' + name
+
 
 def get_to_del_list(name_list):
     '''
@@ -220,6 +236,7 @@ def get_to_del_list(name_list):
         to_del_list = name_list
     return to_del_list
 
+# mat:not use
 def print_format(list_name):
     '''
     Data alignment and division every ten name rows
@@ -227,12 +244,13 @@ def print_format(list_name):
     name = ''
     for i in range(len(list_name)):
         if list_name[i]:
-            name = name.ljust(4)+list_name[i]+'  '
+            name = name.ljust(4) + list_name[i] + '  '
         if i % 10 == 9:
-            name = name+'\n' + ''.ljust(4)
+            name = name + '\n' + ''.ljust(4)
     return name
 
-def prt_res_to_del(str_,res_list):
+
+def prt_res_to_del(str_, res_list):
     print(f'{str_:<15} to be delete:')
     print('-------------------------------------------------------------')
     if res_list:
@@ -244,6 +262,7 @@ def prt_res_to_del(str_,res_list):
     else:
         print('None')
     print()
+
 
 # def getshow(unique_str, id_list, name_list):
 #     '''
@@ -304,7 +323,6 @@ def change_pointer(new_id):
     consts.set_glo_log_id(new_id)
 
 
-
 def re_findall(re_string, tgt_string):
     logger = consts.glo_log()
     re_login = re.compile(re_string)
@@ -358,6 +376,7 @@ def find_session(tgt_ip, ssh, func_str, oprt_id):
             logger.write_to_log('T', 'INFO', 'warning', 'failed', oprt_id,
                                 '  ISCSI not login to VersaPLX, Try to login')
 
+
 def ran_str(num):
     chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     str_ = ''
@@ -366,23 +385,23 @@ def ran_str(num):
     return str_
 
 
-
+# mat:不使用字符串的center方法，用f-string也可填充字符
 def pwl(str, level, oprt_id=None, type=None):
     # rpl = 'no'
     rpl = consts.glo_rpl()
-    str_ = '  ' * level + str
+    indent_str = '  ' * level + str
     if rpl == 'no':
         logger = consts.glo_log()
         if level == 0:
-            str = '*** '+str+' ***'
-            print(f'{str_}'.center(72,'-'))
+            str = '*** ' + str + ' ***'
+            print(f'{indent_str:-^72}')
         else:
-            print(f'|{str_:<70}|')
+            print(f'|{indent_str:<70}|')
             logger.write_to_log('T', 'INFO', 'info', type, oprt_id, str)
 
     elif rpl == 'yes':
         db = consts.glo_db()
-        time = db.get_time_via_str(consts.glo_tsc_id(),str)
+        time = db.get_time_via_str(consts.glo_tsc_id(), str)
         if not time:
             time = ''
 
@@ -392,18 +411,13 @@ def pwl(str, level, oprt_id=None, type=None):
         #     time = ''
 
         if level == 0:
-            str = '*** '+str+' ***'
-            print(f'{str_}'.center(96,'-'))
+            str = '*** ' + str + ' ***'
+            print(f'{indent_str:-^96}')
         else:
-            print(f'|Re:{time:<20} {str_:<70}|')
-
-
-
-
+            print(f'|Re:{time:<20} {indent_str:<70}|')
 
 
 if __name__ == '__main__':
-    pwl('3333',0)
-    pwl('3askldjasdasldkjaskdl',1)
-
-
+    pwl('3333', 1)
+    pwl('3askldjasdasldkjaskdl', 1)
+    pwe("ss")

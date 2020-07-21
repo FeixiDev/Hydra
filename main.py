@@ -25,7 +25,7 @@ class HydraArgParse():
         self.logger = self.init_log()
         consts.set_glo_log(self.logger)
         self.argparse_init()
-        self.list_tid = None # for replay
+        self.list_tid = None  # for replay
         self.log_user_input()
         self.dict_id_str = {}
 
@@ -140,7 +140,8 @@ class HydraArgParse():
             s.prt_res_to_del('\nstorage lun', lun_to_del_list)
 
         if tgt_to_del_list or drbd_to_del_list or lun_to_del_list:
-            answer = input('\n\nDo you want to delete these resource? (yes/y/no/n):')
+            answer = input(
+                '\n\nDo you want to delete these resource? (yes/y/no/n):')
             if answer == 'yes' or answer == 'y':
                 crm.del_all(tgt_to_del_list)
                 drbd.del_all(drbd_to_del_list)
@@ -172,12 +173,15 @@ class HydraArgParse():
                 self.list_tid.remove(tid)
                 consts.set_glo_tsc_id(tid)
 
-            s.pwl('Start to configure LUN on NetApp Storage',0,s.get_oprt_id(),'start')
+            s.pwl('Start to configure LUN on NetApp Storage',
+                  0, s.get_oprt_id(), 'start')
             self._storage()
-            s.pwl('Start to configure DRDB resource and crm resource on VersaPLX',0,s.get_oprt_id(),'start')
+            s.pwl('Start to configure DRDB resource and crm resource on VersaPLX',
+                  0, s.get_oprt_id(), 'start')
             self._vplx_drbd()
             self._vplx_crm()
-            s.pwl('Start to Format and do some IO test on Host',0,s.get_oprt_id(),'start')
+            s.pwl('Start to Format and do some IO test on Host',
+                  0, s.get_oprt_id(), 'start')
             self._host_test()
             time.sleep(2)
             if rpl == 'yes':
@@ -186,7 +190,7 @@ class HydraArgParse():
                 print(''.center(72, '-'), '\n')
 
     @s.record_exception
-    def prepare_replay(self,args):
+    def prepare_replay(self, args):
         db = consts.glo_db()
         arg_tid = args.tid
         arg_date = args.date
@@ -246,6 +250,7 @@ class HydraArgParse():
 
     def start(self):
         args = self.parser.parse_args()
+        print(args.id_range)
 
         # uniq_str: The unique string for this test, affects related naming
         if args.test:
@@ -280,8 +285,6 @@ class HydraArgParse():
             return
 
         self.run(self.dict_id_str)
-
-
 
 
 if __name__ == '__main__':
