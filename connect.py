@@ -26,7 +26,7 @@ class ConnSSH(object):
 
     def _connect(self):
         oprt_id = s.get_oprt_id()
-        s.pwl(f'Start to connect {self._host} via SSH',2,oprt_id,'start')
+        s.pwl(f'Start to connect {self._host} via SSH', 2, oprt_id, 'start')
         self.logger.write_to_log('F', 'DATA', 'value', 'dict', 'data for SSH connect',
                                  {'host': self._host, 'port': self._port, 'username': self._username,
                                   'password': self._password})
@@ -41,7 +41,7 @@ class ConnSSH(object):
         except Exception as e:
             self.logger.write_to_log(
                 'F', 'DATA', 'debug', 'exception', 'ssh connect', str(traceback.format_exc()))
-            s.pwe(f'Connect to {self._host} failed with error: {e}',2,2)
+            s.pwce(f'Connect to {self._host} failed with error: {e}', 2, 2)
 
     def execute_command(self, command):
         stdin, stdout, stderr = self.SSHConnection.exec_command(command)
@@ -109,8 +109,8 @@ class ConnTelnet(object):
         try:
             oprt_id = s.get_oprt_id()
 
-            s.pwl('Start to connect NetApp via Telnet',2,oprt_id,'start')
-            #-m:DATA,Telnet,connect,dict
+            s.pwl('Start to connect NetApp via Telnet', 2, oprt_id, 'start')
+            # -m:DATA,Telnet,connect,dict
             self.logger.write_to_log('F', 'DATA', 'value', 'dict', 'data for telnet connect',
                                      {'host': self._host, 'port': self._port, 'username': self._username,
                                       'password': self._password})
@@ -123,7 +123,7 @@ class ConnTelnet(object):
         except Exception as e:
             self.logger.write_to_log(
                 'F', 'DATA', 'debug', 'exception', 'telnet connect', str(traceback.format_exc()))
-            s.pwe(f'Connect to {self._host} failed with error: {e}',2,2)
+            s.pwce(f'Connect to {self._host} failed with error: {e}', 2, 2)
 
     # 定义exctCMD函数,用于执行命令
     def execute_command(self, cmd):
