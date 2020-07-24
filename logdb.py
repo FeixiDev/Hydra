@@ -100,6 +100,7 @@ class LogDB():
         sql = f"SELECT data FROM logtable WHERE type1 = 'DATA' and type2 = 'cmd' and describe2 = '{oprt_id}'"
         return self.sql_fetch_one(sql)
 
+
     def find_oprt_id_via_string(self, transaction_id, string):
         id_now = consts.glo_log_id()
         # id_now = 1
@@ -110,7 +111,7 @@ class LogDB():
         if id_and_oprt_id:
             return id_and_oprt_id
         else:
-            return ('', '')
+            return ('','')
 
     def get_string_id(self, transaction_id):
         sql = f"SELECT data FROM logtable WHERE describe1 = 'Start a new trasaction' and transaction_id = '{transaction_id}'"
@@ -131,7 +132,7 @@ class LogDB():
         sql = f"SELECT data FROM logtable WHERE type1 = 'INFO' and describe1 = 'finish' and describe2 = '{oprt_id}'"
         return self.sql_fetch_one(sql)
 
-    # -m:via? with
+    #-m:via? with
     def get_transaction_id_via_date(self, date_start, date_end):
         # 获取一个时间段内的全部事务id
         sql = f"SELECT DISTINCT transaction_id FROM logtable WHERE time >= '{date_start}' and time <= '{date_end}'"
@@ -147,33 +148,32 @@ class LogDB():
         sql = f"SELECT data FROM logtable WHERE transaction_id = '{transaction_id}'"
         return self.sql_fetch_one(sql)
 
-    def get_time_via_str(self, transaction_id, str):
+    def get_time_via_str(self, transaction_id , str):
         id_now = consts.glo_log_id()
         # id_now = 1
         sql = f"SELECT time FROM logtable WHERE transaction_id = '{transaction_id}' and id >= {id_now} and data LIKE '%{str}%'"
         return self.sql_fetch_one(sql)
 
-    def get_time_via_unique_str(self, transaction_id, str):
+    def get_time_via_unique_str(self,transaction_id, str):
         id_now = consts.glo_log_id()
         # id_now = 1
-        oprt_id = self.find_oprt_id_via_string(transaction_id, str)[1]
+        oprt_id = self.find_oprt_id_via_string(transaction_id,str)[1]
         sql = f"SELECT time FROM logtable WHERE transaction_id = '{transaction_id}' and id >= {id_now} and describe2 = '{oprt_id}'"
         return self.sql_fetch_one(sql)
 
-    def get_exception_info(self, transaction_id):
+    def get_exception_info(self,transaction_id):
         id_now = consts.glo_log_id()
         # print(id_now)
         # id_now = 1
         sql = f"SELECT data FROM logtable WHERE transaction_id = '{transaction_id}' and describe1 = 'exception' and id >= {id_now}"
         return self.sql_fetch_one(sql)
 
-    def get_last_one(self, transaction_id):
+    def get_last_one(self,transaction_id):
         sql = f"SELECT describe1,data FROM logtable WHERE transaction_id = '{transaction_id}' ORDER BY id DESC"
         return self.sql_fetch_one(sql)
 
-    def get_oprt_id_via_db_id(self, transaction_id, db_id):
-        sql = f"SELECT data FROM logtable WHERE transaction_id = '{transaction_id}' and id = {db_id}"
-        return self.sql_fetch_one(sql)
+
+
 
     def get_logdb(self):
         self.drop_tb()
@@ -214,7 +214,6 @@ if __name__ == '__main__':
     # print(db.get_cmd_result(''))
     # print(db.get_time_via_str('1595396085','Start iscsi login'))
     print(db.get_last_one('1595409897'))
-    # print(db.get_oprt_id_via_db_id(''))
     # print(db.get_time_via_str('1595295584','Start to create lun, name: log_test_203'))
     # print(db.get_cmd_via_tid('1594879092'))
     # res = db.get_transaction_id_via_date('2021/07/13 13:45:57','2021/07/13 13:51:55')
