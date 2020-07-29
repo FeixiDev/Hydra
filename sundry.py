@@ -2,7 +2,6 @@
 import random
 import consts
 import logdb
-
 import sys
 import re
 import time
@@ -54,7 +53,7 @@ def dp(str, arg):
 
 def change_id_str_to_list(id_str):
     id_list = []
-    id_range_list = [int(i) for i in id_str.split(',')]
+    id_range_list = [int(i) for i in id_str]
     
     if len(id_range_list) not in [1, 2]:
         pwce('Please verify id format', 2, 2)
@@ -73,7 +72,7 @@ def scsi_rescan(ssh, mode):
         pwl('Start to scan SCSI device with normal way', 3, '', 'start')
     elif mode == 'r':
         cmd = '/usr/bin/rescan-scsi-bus.sh -r'
-        pwl('Start to scan SCSI device after removing disk', 3, '', 'start')
+        pwl('Start to scan SCSI device after removing disk', 2, '', 'start')
     elif mode == 'a':
         cmd = '/usr/bin/rescan-scsi-bus.sh -a'
         pwl('Start to scan SCSI device in depth', 3, '', 'start')
@@ -103,7 +102,6 @@ def get_lsscsi(ssh, func_str, oprt_id):
 
 
 def get_the_disk_with_lun_id(all_disk):
-    logger = consts.glo_log()
     lun_id = str(consts.glo_id())
     dict_id_disk = dict(all_disk)
     if lun_id in dict_id_disk.keys():
@@ -142,23 +140,6 @@ def get_ssh_cmd(ssh_obj, unique_str, cmd, oprt_id):
             change_pointer(db_id)
         return result
 
-
-def pwce(print_str, log_folder):
-    """
-    print, write to log and exit.
-    :param logger: Logger object for logging
-    :param print_str: Strings to be printed and recorded
-    :param print_str: Strings to be printed and recorded
-    """
-    logger = consts.glo_log()
-    # -m:这里也是要调用s.prt还是啥,指定级别,不同地方调用要用不同的级别.
-    print(print_str)
-    logger.write_to_log('T', 'INFO', 'error', 'exit', '', print_str)
-
-    debug_log_folder = debug_log.collect_debug_log()
-    logger.write_to_log('T', 'DATA', 'clct', '', '', f'Save debug data to folder {debug_log_folder}')
-
-    sys.exit()
 
 
 def _compare(name, name_list):
@@ -345,7 +326,6 @@ def prt(str, level=0, warning_level=0):
         else:
             print(f'|{warning_str:<4}{indent_str:<70}{warning_str:>4}|')
 
-
     else:
         if warning_level == 'exception':
             print(' exception infomation '.center(105, '*'))
@@ -392,38 +372,26 @@ def prt_log(str, level, warning_level):
         db = consts.glo_db()
         oprt_id = db.get_oprt_id_via_db_id(consts.glo_tsc_id(), consts.glo_log_id())
         prt(str + f'.oprt_id:{oprt_id}', level, warning_level)
-        result_cmd = db.get_cmd_result(oprt_id)
-        if result_cmd:
-            result = eval(result_cmd)
-        else:
-            result = None
-        if result:
-            fail_reason = result['rst'].decode()
-        else:
-            fail_reason = 'Unknown mistake'
-        print(' wrong reason '.center(105, '*'))
-        print(fail_reason)
-        print(f'{" wrong reason ":*^105}')
     elif rpl == 'no':
         prt(str, level, warning_level)
-
-    # format_width = 105 if rpl == 'yes' else 80
-    # db = consts.glo_db()
-    # oprt_id = db.get_oprt_id_via_db_id(consts.glo_tsc_id(), consts.glo_log_id())
-    # prt(str+f'oprt_id:{oprt_id}',level,warning_level)
 
     if warning_level == 1:
         logger.write_to_log('T', 'INFO', 'warning', 'fail', '', str)
     elif warning_level == 2:
         logger.write_to_log('T', 'INFO', 'error', 'exit', '', str)
+        # print(f'{"":-^{format_width}}','\n')
         # sys.exit()
 
 
 def pwe(str, level, warning_level):
+    rpl = consts.glo_rpl()
     prt_log(str, level, warning_level)
-    if warning_level == 2:
-        sys.exit()
 
+    if warning_level == 2:
+        if rpl == 'no':
+            sys.exit()
+        else:
+            raise consts.ReplayExit
 
 def pwce(str, level, warning_level):
     """
@@ -431,12 +399,16 @@ def pwce(str, level, warning_level):
     :param logger: Logger object for logging
     :param print_str: Strings to be printed and recorded
     """
-
+    rpl = consts.glo_rpl()
     prt_log(str,level,warning_level)
-    if consts.glo_rpl() == 'no':
+    if rpl == 'no':
         debug_log.collect_debug_log()
+        print('debug')
     if warning_level == 2:
-        sys.exit()
+        if rpl == 'no':
+            sys.exit()
+        else:
+            raise consts.ReplayExit
 
 
 def handle_exception(str='',level=0,warning_level=0):
@@ -450,7 +422,7 @@ def handle_exception(str='',level=0,warning_level=0):
             raise consts.ReplayExit
         else:
             oprt_id = db.get_oprt_id_via_db_id(consts.glo_tsc_id(),consts.glo_log_id())
-            prt(f'Unable to get data from the database.oprt_id:{oprt_id}',3,2)
+            prt(f'Unable to get data from the logfile.oprt_id:{oprt_id}',3,2)
             raise consts.ReplayExit
 
     else:

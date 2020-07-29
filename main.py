@@ -63,6 +63,7 @@ class HydraArgParse():
             action="store",
             default='',
             dest="id_range",
+            nargs= '+',
             help='ID or ID range(split with ",")')
 
         sub_parser = self.parser.add_subparsers(dest='replay')
@@ -86,6 +87,7 @@ class HydraArgParse():
             metavar='',
             nargs=2,
             help='date')
+        self.parser_replay = parser_replay
 
     def _storage(self):
         '''
@@ -144,20 +146,19 @@ class HydraArgParse():
         if crm_to_del_list or drbd_to_del_list or lun_to_del_list:
             answer = input('\n\nDo you want to delete these resource? (yes/y/no/n):')
             if answer == 'yes' or answer == 'y':
-                s.pwl('Start to delete CRM resource', 2)
                 crm.del_all(crm_to_del_list)
-                s.pwl('Start to delete DRBD resource', 2)
                 drbd.del_all(drbd_to_del_list)
-                s.pwl('Start to delete Storage LUN', 2)
                 stor.del_all(lun_to_del_list)
+                s.pwl('Start to remove all deleted disk device on vplx and host',0)
                 # remove all deleted disk device on vplx and host
                 crm.vplx_rescan_r()
                 host.host_rescan_r()
+                print(f'{"":-^80}','\n')
             else:
-                s.pwce('User canceled deleting proccess ...', 2, 2)
+                s.pwe('User canceled deleting proccess ...', 2, 2)
         else:
-            s.pwce(
-                '\nNo qualified resources to be delete.\n', 2, 2)
+            print()
+            s.pwe('No qualified resources to be delete.', 2, 2)
 
     @s.record_exception
     def run(self, dict_args):
@@ -196,6 +197,23 @@ class HydraArgParse():
                 print(f'{"":-^{format_width}}', '\n')
                 continue
 
+    def get_valid_transaction(self,list_transaciont):
+        db = consts.glo_db()
+        lst_tid = list_transaciont[:]
+        for tid in lst_tid:
+            string, id = db.get_string_id(tid)
+            if string and id:
+                self.dict_id_str.update({id: string})
+            else:
+                self.list_tid.remove(tid)
+                cmd = db.get_cmd_via_tid(tid)
+                print(f'事务:{tid} 不满足replay条件，所执行的命令为：{cmd}')
+        print(f'Transaction to be executed: {" ".join(self.list_tid)}')
+        return self.dict_id_str
+
+
+
+
     def prepare_replay(self, args):
         db = consts.glo_db()
         arg_tid = args.tid
@@ -211,26 +229,20 @@ class HydraArgParse():
                 return
             consts.set_glo_tsc_id(arg_tid)
             self.dict_id_str.update({id: string})
-
+            print(f'Transaction to be executed: {arg_tid}')
             # self.replay_run(args.transactionid)
         elif arg_date:
             self.list_tid = db.get_transaction_id_via_date(
                 arg_date[0], arg_date[1])
-            lst_tid = self.list_tid[:]
-            for tid in lst_tid:
-                string, id = db.get_string_id(tid)
-                if string and id:
-                    self.dict_id_str.update({id: string})
-                else:
-                    self.list_tid.remove(tid)
-                    cmd = db.get_cmd_via_tid(tid)
-
-                    print(f'事务:{tid} 不满足replay条件，所执行的命令为：{cmd}')
-                    # s.dp('after remove one', self.list_tid)
-
+            self.get_valid_transaction(self.list_tid)
+        elif arg_tid and arg_date:
+            print('Please specify only one type of data for replay')
         else:
-            print('replay help')
-            return
+            # 执行日志全部的事务
+            self.list_tid = db.get_all_transaction()
+            self.get_valid_transaction(self.list_tid)
+
+
 
     def start(self):
         args = self.parser.parse_args()
