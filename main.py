@@ -203,7 +203,7 @@ class HydraArgParse():
             self.generate_iqn_list()
             crm=vplx.VplxCrm()
             if crm.verify_crm_cfg():
-                self.iqn_to_host_test()      
+                self.iqn_to_host_test()
             
 
     def delete_resource(self):

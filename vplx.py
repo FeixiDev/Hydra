@@ -300,6 +300,7 @@ class VplxCrm(object):
         self.STR = consts.glo_str()
         self.rpl = consts.glo_rpl()
         self.lu_name = f'res_{self.STR}_{self.ID}'
+        #-m:下面三项不需要写在属性里吧
         self.colocation_name = f'co_{self.lu_name}'
         self.order_name = f'or_{self.lu_name}'
         self.order_name2=f'or_{self.lu_name}_prtoff'
@@ -590,6 +591,88 @@ class VplxCrm(object):
             s.handle_exception()
 
 
+
+    def _m_get_crm_status(self, res_name):
+        '''
+        Check the crm resource status
+        '''
+        unique_str = 'UqmUytK3'
+        cmd_grep_res = f'crm res list | grep {res_name}'
+        oprt_id = s.get_oprt_id()
+        result = s.get_ssh_cmd(SSH, unique_str, cmd_grep_res, oprt_id)
+        if result:
+            if result['sts']:
+                re_string=f'''{res_name}\s*\(ocf::heartbeat:\w*\):\s*(\w*)'''
+                re_result=s.re_search(re_string, result['rst'].decode('utf-8'))
+                if re_result:
+                    return {re_result.group(1)}
+                else:
+                    s.pwce('Failed to show crm',4,2)
+            else:
+                s.pwce('Failed to show crm',4,2)
+        else:
+            s.handle_exception()
+
+    def _m_cyclic_check(self,res_name, expect_status, sec, num):
+        n=0
+        while n<num:
+            n+=1
+            if self._m_get_crm_status(res_name) != expect_status:
+                time.sleep(sec)
+            else:
+                if self._targetcli_verify():
+                    return True
+        else:
+            s.pwce('Failed to verify the CRM and targetcli status',2,2)
+
+    def _m_check_crm_start(self, res_name):
+        expect_status = 'Start'
+        if self._m_get_crm_status(res_name) == expect_status:
+            return True
+        else:
+            if self._m_cyclic_check(res_name,expect_status, 3, 100):
+                return True
+            elif self._m_get_crm_status(res_name) == 'Stop':
+                self._m_cyclic_check(res_name,expect_status, 3, 100)
+            elif self._m_get_crm_status(res_name) == 'Failed':
+                self._crm_ref()
+                if self._m_cyclic_check(res_name,expect_status, 3, 100):
+                    return True
+                else:
+                    self._crm_restart()
+                    if self._m_cyclic_check(res_name,status, 6, 100):
+                        return True
+
+
+    def _m_check_target_start(self, status):
+        expect_status = 'Start'
+        if self._m_get_crm_status(TARGET_NAME) == 'Start':
+            return True
+        else:
+            sys.exit()
+            # if self._m_cyclic_check(TARGET_NAME,expect_status, 3, 100):
+            #     return True
+            # elif self._m_get_crm_status(TARGET_NAME) == 'Stop':
+            #     self._m_cyclic_check(TARGET_NAME,expect_status, 6, 100)
+            # elif self._m_get_crm_status(TARGET_NAME) == 'Failed':
+            #     self._crm_ref()
+            #     if self._m_cyclic_check(TARGET_NAME,expect_status, 6, 100):
+            #         return True
+            #     else:
+            #         self._crm_restart()
+            #         if self._m_cyclic_check(TARGET_NAME,expect_status, 6, 100):
+
+    # def _m_crm_verify(res_name):
+    #     if _m_check_crm_start():
+            
+
+    #     if self._m_check_target('Start'):
+    #             return True
+    #     else:
+    #         print(f'target {TARGET_NAME} start failed')
+
+
+
         
     def extension_crm_verify(self):
         crm = self._crm_verify(self.lu_name)
@@ -602,7 +685,7 @@ class VplxCrm(object):
         if t_test['status']=='Stopped':
             self.cyclic_check_crm_status(TARGET_NAME,'Started')
             t_test=self._crm_verify(TARGET_NAME)
-        if crm['status']=='FAILED':
+        if self._crm_verify(self.lu_name)['status'] =='FAILED':
             self._crm_ref()
             if self._crm_failed_time_delay(5):
                 if self._crm_failed_time_delay(10):
