@@ -63,6 +63,9 @@ def set_glo_id_list(value):
 def append_glo_iqn_list(value):
     _GLOBAL_DICT['IQN_LIST'].append(value)
 
+def set_glo_iqn_list(value):
+    set_value('IQN_LIST', value)
+
 def glo_log():
     return get_value('LOG')
 
@@ -76,7 +79,7 @@ def glo_str():
 
 
 def glo_id():
-    return get_value('ID')
+    return get_value('ID',0)
 
 
 def glo_rpl():
