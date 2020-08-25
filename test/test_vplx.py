@@ -16,13 +16,13 @@ def test_init_ssh():
 
 
 def test_find_new_disk():
-    Storage = storage.Storage()
-    Storage.lun_create()
-    Storage.lun_map()
+    stor = storage.Storage()
+    stor.lun_create()
+    stor.lun_map()
     s.scsi_rescan(vplx.SSH, 'n')
     assert '/dev/' in vplx._find_new_disk()
-    Storage.lun_unmap('pytest_99')
-    Storage.lun_destroy('pytest_99')
+    stor.lun_unmap('pytest_99')
+    stor.lun_destroy('pytest_99')
 
 
 def test_get_disk_dev():
@@ -55,14 +55,14 @@ class TestVplxDrbd:
     def setup_class(self):
         self.drbd = vplx.VplxDrbd()
         logdb.prepare_db()
-        self.Storage = storage.Storage()
-        self.Storage.lun_create()
-        self.Storage.lun_map()
+        self.stor = storage.Storage()
+        self.stor.lun_create()
+        self.stor.lun_map()
         s.scsi_rescan(vplx.SSH, 'n')
 
     def teardown_class(self):
-        self.Storage.lun_unmap('pytest_99')
-        self.Storage.lun_destroy('pytest_99')
+        self.stor.lun_unmap('pytest_99')
+        self.stor.lun_destroy('pytest_99')
 
     def test_prepare(self):
         self.drbd._prepare()
@@ -107,9 +107,9 @@ class TestVplxCrm:
     
     def setup_class(self):
         self.crm = vplx.VplxCrm()
-        self.Storage = storage.Storage()
-        self.Storage.lun_create()
-        self.Storage.lun_map()
+        self.stor = storage.Storage()
+        self.stor.lun_create()
+        self.stor.lun_map()
         s.scsi_rescan(vplx.SSH, 'n')
         self.drbd = vplx.VplxDrbd()
         self.drbd.prepare_config_file()
@@ -118,8 +118,8 @@ class TestVplxCrm:
 
     def teardown_class(self):
         self.drbd.drbd_del(self.drbd.res_name)
-        self.Storage.lun_unmap('pytest_99')
-        self.Storage.lun_destroy('pytest_99')
+        self.stor.lun_unmap('pytest_99')
+        self.stor.lun_destroy('pytest_99')
 
     def test_crm_create(self):
         assert self.crm._crm_create() == True
