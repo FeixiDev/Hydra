@@ -1,5 +1,6 @@
 import connect
 import os
+import telnetlib
 
 
 SSHHOST = '10.203.1.200'
@@ -17,7 +18,8 @@ TELPASSWORD = 'Feixi@123'
 class TestConnSSH:
 
     def setup_class(self):
-        self.ssh = connect.ConnSSH(SSHHOST, SSHPORT, SSHUSER, SSHPASSWORD, TIMEOUT)
+        self.ssh = connect.ConnSSH(
+            SSHHOST, SSHPORT, SSHUSER, SSHPASSWORD, TIMEOUT)
 
     def test_connect(self):
         assert self.ssh._connect() == None
@@ -55,17 +57,20 @@ class TestConnSSH:
 class TestConnTelnet:
 
     def setup_class(self):
-    	self.telnet = connect.ConnTelnet(TELHOST, TELPORT, TELUSER, TELPASSWORD, TIMEOUT)
+        self.telnet = connect.ConnTelnet(
+            TELHOST, TELPORT, TELUSER, TELPASSWORD, TIMEOUT)
 
     def test_connect(self):
-    	assert self.telnet._connect() == None
+        self.telnet.telnet = telnetlib.Telnet()
+        assert self.telnet._connect() == None
 
     def test_execute_command(self):
-    	assert self.telnet.execute_command('lun show') != None
+        assert self.telnet.execute_command('lun show') != None
 
     def test_telnet_connect(self):
-    	assert self.telnet.telnet_connect() == None
+        self.telnet.telnet = telnetlib.Telnet()
+        assert self.telnet.telnet_connect() == None
 
     def test_close(self):
-    	pass
-    	# assert self.telnet.close() == None
+        pass
+        # assert self.telnet.close() == None
