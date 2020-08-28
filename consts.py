@@ -6,21 +6,22 @@ class ReplayExit(Exception):
 
 
 def _init():
-    global _global_dict
-    _global_dict = {}
-    _global_dict['LOG_ID'] = 0
-    _global_dict['RPL'] = 'no'
-    _global_dict['LOG_SWITCH'] = 'yes'
+    global _GLOBAL_DICT
+    _GLOBAL_DICT = {}
+    _GLOBAL_DICT['LOG_ID'] = 0
+    _GLOBAL_DICT['RPL'] = 'no'
+    _GLOBAL_DICT['LOG_SWITCH'] = 'yes'
+    _GLOBAL_DICT['IQN_LIST'] = []
 
 def set_value(key, value):
     """ 定义一个全局变量 """
-    _global_dict[key] = value
+    _GLOBAL_DICT[key] = value
 
 
 def get_value(key, dft_val = None):
     """ 获得一个全局变量,不存在则返回默认值 """
     try:
-        return _global_dict[key]
+        return _GLOBAL_DICT[key]
     except KeyError:
         return dft_val
 
@@ -59,6 +60,11 @@ def set_glo_log_switch(value):
 def set_glo_id_list(value):
     set_value('ID_LIST', value)
 
+def append_glo_iqn_list(value):
+    _GLOBAL_DICT['IQN_LIST'].append(value)
+
+def set_glo_iqn_list(value):
+    set_value('IQN_LIST', value)
 
 def glo_log():
     return get_value('LOG')
@@ -73,7 +79,7 @@ def glo_str():
 
 
 def glo_id():
-    return get_value('ID')
+    return get_value('ID',0)
 
 
 def glo_rpl():
@@ -95,46 +101,50 @@ def glo_log_switch():
 def glo_id_list():
     return get_value('ID_LIST')
 
+def glo_iqn_list():
+    return get_value('IQN_LIST')
+
+
 def get_cmd_debug_sys(debug_folder,host):
     cmd_debug_sys = [
             # f'dmesg > {debug_folder}/dmesg.log',
-            f'echo -- date&time: >> {debug_folder}/{host}_sys_info.log',
-            f'date >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- host name: >> {debug_folder}/{host}_sys_info.log',
-            f'hostname >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- uname -a: >> {debug_folder}/{host}_sys_info.log',
-            f'uname -a >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- uname -r: >> {debug_folder}/{host}_sys_info.log',
-            f'uname -r >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- uname -m: >> {debug_folder}/{host}_sys_info.log',
-            f'uname -m >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- CPU Info: >> {debug_folder}/{host}_sys_info.log',
-            f'cat /proc/cpuinfo >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- Memory Info: >> {debug_folder}/{host}_sys_info.log',
-            f'cat /proc/meminfo >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- network setting: >> {debug_folder}/{host}_sys_info.log',
-            f'ifconfig >> {debug_folder}/{host}_sys_info.log',
-            f'echo -- : >> {debug_folder}/{host}_sys_info.log',
-            f'env >> {debug_folder}/{host}_sys_info.log',
-            f'uname -a >> {debug_folder}/{host}_sys_info.log',
-            f'echo --environment: >> {debug_folder}/{host}_sys_info.log',
-            f'env >> {debug_folder}/{host}_sys_info.log',
-            f'echo --dmesg: >> {debug_folder}/{host}_sys_info.log',
-            f'dmesg >> {debug_folder}/{host}_sys_info.log',
-            f'tar cvf {debug_folder}/{host}_syslog.tar /var/log/syslog*'
+            f'echo -- date&time: >> {debug_folder}/sys_info.log',
+            f'date >> {debug_folder}/sys_info.log',
+            f'echo -- host name: >> {debug_folder}/sys_info.log',
+            f'hostname >> {debug_folder}/sys_info.log',
+            f'echo -- uname -a: >> {debug_folder}/sys_info.log',
+            f'uname -a >> {debug_folder}/sys_info.log',
+            f'echo -- uname -r: >> {debug_folder}/sys_info.log',
+            f'uname -r >> {debug_folder}/sys_info.log',
+            f'echo -- uname -m: >> {debug_folder}/sys_info.log',
+            f'uname -m >> {debug_folder}/sys_info.log',
+            f'echo -- CPU Info: >> {debug_folder}/sys_info.log',
+            f'cat /proc/cpuinfo >> {debug_folder}/sys_info.log',
+            f'echo -- Memory Info: >> {debug_folder}/sys_info.log',
+            f'cat /proc/meminfo >> {debug_folder}/sys_info.log',
+            f'echo -- network setting: >> {debug_folder}/sys_info.log',
+            f'ifconfig >> {debug_folder}/sys_info.log',
+            f'echo -- : >> {debug_folder}/sys_info.log',
+            f'env >> {debug_folder}/sys_info.log',
+            f'uname -a >> {debug_folder}/sys_info.log',
+            f'echo --environment: >> {debug_folder}/sys_info.log',
+            f'env >> {debug_folder}/sys_info.log',
+            f'echo --dmesg: >> {debug_folder}/sys_info.log',
+            f'dmesg >> {debug_folder}/sys_info.log',
+            f'tar cvf {debug_folder}/syslog.tar /var/log/syslog*'
         ]
     return cmd_debug_sys
 
 def get_cmd_debug_drbd(debug_folder, host):
     cmd_debug_drbd = [
-            f'tar -cvf {debug_folder}/{host}_drbd_conf_file.tar /etc/drbd.d/*',
-            f'drbdadm status >> {debug_folder}/{host}_drbd.log',
+            f'tar -cvf {debug_folder}/drbd_conf_file.tar -C /etc drbd.d',
+            f'drbdadm status >> {debug_folder}/drbd.log',
         ]
     return cmd_debug_drbd
 
 def get_cmd_debug_crm(debug_folder, host):
     cmd_debug_crm = [
-            f'crm res show >> {debug_folder}/{host}_crm.log'
+            f'crm res show >> {debug_folder}/crm.log'
         ]
     return cmd_debug_crm
 
