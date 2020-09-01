@@ -29,7 +29,7 @@ class TestStorage:
         self.oprt_id = s.get_oprt_id()
 
     def test_ex_telnet_cmd(self):
-        assert self.storage.ex_telnet_cmd('pytest', 'lun show', self.oprt_id)
+        assert self.storage._ex_telnet_cmd('pytest', 'lun show', self.oprt_id)
 
     def test_lun_create(self):
         assert self.storage.lun_create() == None

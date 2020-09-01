@@ -15,20 +15,6 @@ def test_init_ssh():
     assert vplx.SSH != None
 
 
-def test_find_new_disk():
-    stor = storage.Storage()
-    stor.lun_create()
-    stor.lun_map()
-    s.scsi_rescan(vplx.SSH, 'n')
-    assert '/dev/' in vplx._find_new_disk()
-    stor.lun_unmap('pytest_99')
-    stor.lun_destroy('pytest_99')
-
-
-def test_get_disk_dev():
-    assert '/dev/' in vplx.get_disk_dev()
-
-
 class TestDebugLog:
 
     def setup_class(self):
