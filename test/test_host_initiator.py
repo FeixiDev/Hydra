@@ -39,8 +39,9 @@ class TestDebugLog:
         self.debuglog.get_all_log(self.debug_folder)
         assert '10.203.1.200.tar' in os.listdir(self.debug_folder)
 
+
 class TestHostTest:
-    
+
     def setup_class(self):
         self.host = hi.HostTest()
         self.stor = storage.Storage()
@@ -91,4 +92,3 @@ class TestHostTest:
 
     def test_host_rescan_r(self):
         assert self.host.host_rescan_r() == True
-

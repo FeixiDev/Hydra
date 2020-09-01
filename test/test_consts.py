@@ -3,7 +3,8 @@ import consts
 
 def test_init():
     assert consts._init() == None
-    assert consts._GLOBAL_DICT == {'IQN_LIST': [], 'LOG_ID': 0, 'LOG_SWITCH': 'yes', 'RPL': 'no'}
+    assert consts._GLOBAL_DICT == {'IQN_LIST': [],
+                                   'LOG_ID': 0, 'LOG_SWITCH': 'yes', 'RPL': 'no'}
 
 
 def test_set_value():
@@ -60,9 +61,11 @@ def test_set_glo_id_list():
     consts.set_glo_id_list('testID_LIST')
     assert consts._GLOBAL_DICT['ID_LIST'] == 'testID_LIST'
 
+
 def test_set_glo_iqn_list():
     consts.set_glo_iqn_list(['test_iqn1', 'test_iqn2'])
     assert consts._GLOBAL_DICT['IQN_LIST'] == ['test_iqn1', 'test_iqn2']
+
 
 def test_append_glo_iqn_list():
     consts.set_glo_iqn_list(['test_iqn1'])
@@ -104,6 +107,7 @@ def test_glo_log_switch():
 
 def test_glo_id_list():
     assert consts.glo_id_list() == 'testID_LIST'
+
 
 def test_glo_iqn_list():
     assert consts.glo_iqn_list() == ['test_iqn1', 'test_iqn2']

@@ -90,7 +90,7 @@ class TestVplxDrbd:
 
 
 class TestVplxCrm:
-    
+
     def setup_class(self):
         self.crm = vplx.VplxCrm()
         self.stor = storage.Storage()
@@ -124,4 +124,3 @@ class TestVplxCrm:
 
     def test_crm_del(self):
         assert self.crm._crm_del(self.drbd.res_name) == True
-        
