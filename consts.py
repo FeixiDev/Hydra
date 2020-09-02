@@ -1,17 +1,20 @@
 # coding:utf-8
 
+VERSION = 'v0.0.1'
+
 class ReplayExit(Exception):
     "replay时，输出日志中的异常信息后，此次replay事务也随之停止"
     pass
 
 
-def _init():
+def glo_init():
     global _GLOBAL_DICT
     _GLOBAL_DICT = {}
     _GLOBAL_DICT['LOG_ID'] = 0
     _GLOBAL_DICT['RPL'] = 'no'
     _GLOBAL_DICT['LOG_SWITCH'] = 'yes'
     _GLOBAL_DICT['IQN_LIST'] = []
+
 
 def set_value(key, value):
     """ 定义一个全局变量 """

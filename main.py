@@ -1,105 +1,76 @@
 #  coding: utf-8
 
-import consts
 import argparse
+import control as c
 import sys
-import time
-import sundry as s
-import log
-import logdb
-import debug_log
-import control
+import consts
+
+class MyArgumentParser(argparse.ArgumentParser):
+    def parse_args(self, args=None, namespace=None):
+        # logger = consts.glo_log()
+        args, argv = self.parse_known_args(args, namespace)
+        if argv:
+            msg = ('unrecognized arguments: %s')
+            # logger.write_to_log('INFO','error','exit','args error',(msg % ' '.join(argv)))
+            self.error(msg % ' '.join(argv))
+        return args
+
+    def print_usage(self, file=None):
+        logger = consts.glo_log()
+        cmd = ' '.join(sys.argv[1:])
+        logger.write_to_log('F','DATA', 'INFO', 'cmd_input', '', {'valid':'0','cmd':cmd})
+        logger.write_to_log('T', 'INFO', 'INFO', 'finish','', 'print usage')
+        if file is None:
+            file = sys.stdout
+        self._print_message(self.format_usage(), file)
+
+    def print_help(self, file=None):
+        logger = consts.glo_log()
+        logger.write_to_log('T', 'INFO', 'INFO', 'finish','', 'print help')
+        if file is None:
+            file = sys.stdout
+        self._print_message(self.format_help(), file)
+
+    def _print_message(self, message, file=None):
+        if message:
+            if file is None:
+                file = sys.stderr
+            file.write(message)
 
 
-class HydraArgParse(control.HydraControl):
+class HydraArgParse():
     '''
     Hydra project
     parse argument for auto max lun test program
     '''
     def __init__(self):
-        consts._init()
         # -m:可能在某个地方我们要打印出来这个ID,哦,collect debug log时候就需要这个.但是这个id是什么时候更新的??理一下
-        self.transaction_id = s.get_transaction_id()
-        consts.set_glo_tsc_id(self.transaction_id)
-        self.logger = log.Log(self.transaction_id)
-        consts.set_glo_log(self.logger)
         self.argparse_init()
-        self.list_tid = None  # for replay
-        self.log_user_input()
-        super(HydraArgParse, self).__init__()
-
-    def log_user_input(self):
-        if sys.argv:
-            cmd = ' '.join(sys.argv)
-            self.logger.write_to_log(
-                'T', 'DATA', 'input', 'user_input', '', cmd)
-
-    def get_valid_transaction(self, list_transaciont):
-        db = consts.glo_db()
-        lst_tid = list_transaciont[:]
-        for tid in lst_tid:
-            string, id = db.get_string_id(tid)
-            if string and id:
-                self.dict_id_str.update({id: string})
-            else:
-                self.list_tid.remove(tid)
-                cmd = db.get_cmd_via_tid(tid)
-                print(f'事务:{tid} 不满足replay条件，所执行的命令为：{cmd}')
-        print(f'Transaction to be executed: {" ".join(self.list_tid)}')
-        return self.dict_id_str
-
-    def prepare_replay(self, args):
-        db = consts.glo_db()
-        arg_tid = args.tid
-        arg_date = args.date
-        print('* MODE : REPLAY *')
-        time.sleep(1.5)
-        if arg_tid:
-            string, id = db.get_string_id(arg_tid)
-            if not all([string, id]):
-                cmd = db.get_cmd_via_tid(arg_tid)
-                print(
-                    f'事务:{arg_tid} 不满足replay条件，所执行的命令为：{cmd}')
-                return
-            consts.set_glo_tsc_id(arg_tid)
-            self.dict_id_str.update({id: string})
-            print(f'Transaction to be executed: {arg_tid}')
-            # self.replay_run(args.transactionid)
-        elif arg_date:
-            self.list_tid = db.get_transaction_id_via_date(
-                arg_date[0], arg_date[1])
-            self.get_valid_transaction(self.list_tid)
-        elif arg_tid and arg_date:
-            print('Please specify only one type of data for replay')
-        else:
-            # 执行日志全部的事务
-            self.list_tid = db.get_all_transaction()
-            self.get_valid_transaction(self.list_tid)
+        self.start()
 
     def argparse_init(self):
-        self.parser = argparse.ArgumentParser(prog='Hydra',
+        self.parser = MyArgumentParser(prog='Hydra',
                                               description='Auto test max supported LUNs/Hosts/Replicas on VersaRAID-SDS')
-        # self.parser.add_argument(
-        #     '-t',
-        #     action="store_true",
-        #     dest="test",
-        #     help="just for test"
-        # )
-        sub_parser = self.parser.add_subparsers(dest='subcommand')
-        parser_replay = sub_parser.add_parser(
-            'replay',
-            aliases=['re'],
+        sub_parser = self.parser.add_subparsers(dest='l1')
+        parser_version = sub_parser.add_parser(
+            'version',
+            help='Output current hydra version'
+        )
+        #replay or re
+        self.parser_replay = sub_parser.add_parser(
+            'rpl',
+            #aliases=['replay'],
             formatter_class=argparse.RawTextHelpFormatter,
             help='Replay the Hydra program'
         )
-        parser_replay.add_argument(
+        self.parser_replay.add_argument(
             '-t',
             '--transactionid',
             dest='tid',
             metavar='',
             help='The transaction id for replay'
         )
-        parser_replay.add_argument(
+        self.parser_replay.add_argument(
             '-d',
             '--date',
             dest='date',
@@ -107,10 +78,17 @@ class HydraArgParse(control.HydraControl):
             nargs=2,
             help='The time period for replay'
         )
-        self.parser_replay = parser_replay
+        self.parser_replay.add_argument(
+            '-a',
+            '--all',
+            dest='all',
+            action="store_true",
+            help='Replay all'
+        )
+        #lun or maxlun
         parser_maxlun = sub_parser.add_parser(
-            'maxlun',
-            aliases=['mxl'],
+            'lun',
+            #aliases=['maxlun'],
             help='Do the max supported LUNs test'
         )
         parser_maxlun.add_argument(
@@ -129,18 +107,23 @@ class HydraArgParse(control.HydraControl):
             dest="uniq_str",
             help="The unique string for this test, affects related naming"
         )
-        #max host test with one lun
-        parser_maxhost_lun = sub_parser.add_parser(
-            'mh',
+        #iqn
+        self.parser_iqn = sub_parser.add_parser(
+            'iqn',
+            help = 'Do the max supported Hosts test with one LUN or N LUNs'
+        )
+        parser_iqn_sub = self.parser_iqn.add_subparsers(dest='l2')
+        #iqn otm
+        parser_iqn_o2n = parser_iqn_sub.add_parser(
+            'o2n',
             help = 'Do the max supported Hosts test with one LUN'
         )
-        #max host test with number luns
-        parser_maxhost_luns = sub_parser.add_parser(
-            'mxh',
-            #aliases=['mxh'],
+        #iqn mtm
+        parser_iqn_n2n = parser_iqn_sub.add_parser(
+            'n2n',
             help='Do the max supported Hosts test with N LUNs'
         )
-        parser_maxhost_luns.add_argument(
+        parser_iqn_n2n.add_argument(
             '-id',
             required=True,
             action="store",
@@ -149,7 +132,7 @@ class HydraArgParse(control.HydraControl):
             nargs='+',
             help='ID or ID range'
         )
-        parser_maxhost_luns.add_argument(
+        parser_iqn_n2n.add_argument(
             '-c',
             required=True,
             action="store",
@@ -157,17 +140,17 @@ class HydraArgParse(control.HydraControl):
             type=int,
             help="The capacity of each Lun, which represents the number of hosts that can be mapped"
         )
-        parser_maxhost_luns.add_argument(
+        parser_iqn_n2n.add_argument(
             '-n',
             action="store",
             type=int,
             dest="random_number",
             help='The number of hosts which is select for test'
         )
-        #delete resource
+        #del or delete
         parser_delete_re = sub_parser.add_parser(
-            'delete',
-            aliases=['del'],
+            'del',
+            #aliases=['delete'],
             help='Confirm to delete LUNs'
         )
         parser_delete_re.add_argument(
@@ -184,60 +167,47 @@ class HydraArgParse(control.HydraControl):
             dest="uniq_str",
             help="The unique string for this test, affects related naming"
         )
-        # parser_maxlun.set_defaults(func=self.run_maxlun)
-        # parser_maxhost_lun.set_defaults(func=self.run_maxhost)
-        # parser_maxhost_luns.set_defaults(func=self.run_mxh)
-        # parser_delete_re.set_defaults(func=self.delete_resource())
+        parser_test = sub_parser.add_parser(
+            'test',
+            help="just for test"
+        )
 
     def start(self):
+        ctrl = c.HydraControl()
         args = self.parser.parse_args()
-        print('args:',args)
-        try:
-            if args.id_range:
-                id_list = s.change_id_str_to_list(args.id_range)
-                consts.set_glo_id_list(id_list)
-        except:
-            pass
-        try:
-            if args.uniq_str:
-                consts.set_glo_str(args.uniq_str)
-        except:
-            pass
-        try:
-            if args.capacity:
-                self.capacity = args.capacity
-        except:
-            pass
-        try:
-            self.random_num=args.random_number
-        except:
-            pass
-        if args.subcommand in ['mxl','maxlun']:
-            id_list = consts.glo_id_list()
-            for id_ in id_list:
-                self.dict_id_str.update({id_: args.uniq_str})
-            self.run_maxlun(self.dict_id_str)
-        elif args.subcommand == 'mh':
-            self.run_maxhost()
-        elif args.subcommand == 'mxh':
-            self.run_mxh()
-        elif args.subcommand in ['del', 'delete']:
-            self.delete_resource()
-        elif args.subcommand == 're':
-            consts.set_glo_rpl('yes')
-            consts.set_glo_log_switch('no')
-            logdb.prepare_db()
-            self.prepare_replay(args)
+        if args.l1 == 'lun':
+            ctrl.log_user_input(args)
+            ctrl.run_lun(args)
+        elif args.l1 == 'iqn':
+            if args.l2 == 'o2n':
+                ctrl.log_user_input(args)
+                ctrl.run_iqn_o2n()
+            elif args.l2 == 'n2n':
+                ctrl.log_user_input(args)
+                ctrl.run_iqn_n2n(args)
+            else:
+                self.parser_iqn.print_help()
+        elif args.l1 == 'del':
+            ctrl.log_user_input(args)
+            ctrl.delete_resource(args)
+        elif args.l1 == 'rpl':
+            ctrl.replay_parser()
+            if args.tid:
+                ctrl.run_rpl_tid(args, self.parser)
+            elif args.date:
+                ctrl.run_rpl_date(args, self.parser)
+            elif args.all:
+                ctrl.run_rpl_all(args, self.parser)
+            else:
+                self.parser_replay.print_help()
+        elif args.l1 == 'version':
+            ctrl.run_show_version()
+        elif args.l1 == 'test':
+            ctrl.run_test()
         else:
             self.parser.print_help()
-        # args.func(args)
-
-        # if args.test:
-        #     debug_log.collect_debug_log()
-        #     return
 
 
 if __name__ == '__main__':
     obj = HydraArgParse()
-    obj.start()
 
