@@ -115,7 +115,7 @@ class ConnTelnet(object):
             self.logger.write_to_log('F', 'DATA', 'value', 'dict', 'data for telnet connect',
                                      {'host': self._host, 'port': self._port, 'username': self._username,
                                       'password': self._password})
-            self.telnet.open(self._host, self._port)
+            self.telnet.open(self._host, self._port, timeout=self._timeout)
             self.telnet.read_until(b'Username:', timeout=1)
             self.telnet.write(self._username.encode() + b'\n')
             self.telnet.read_until(b'Password:', timeout=1)
@@ -130,10 +130,10 @@ class ConnTelnet(object):
 
     # 定义exctCMD函数,用于执行命令
     def execute_command(self, cmd):
-        self.telnet.read_until(b'fas270>').decode()
+        self.telnet.read_until(b'fas270>', timeout=self._timeout).decode()
         self.telnet.write(cmd.encode().strip() + b'\r')
         time.sleep(0.1)
-        rely = self.telnet.read_until(b'fas270>').decode()
+        rely = self.telnet.read_until(b'fas270>', timeout=self._timeout).decode()
         self.telnet.write(b'\r')
         return rely
 
