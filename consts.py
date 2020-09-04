@@ -1,17 +1,20 @@
 # coding:utf-8
 
+VERSION = 'v0.0.1'
+
 class ReplayExit(Exception):
-    "replay时，输出日志中的异常信息后，此次replay事务也随之停止"
+    "replay时，输出日志中的异常信息后，此次replay事务结束，进行下一次事务"
     pass
 
 
-def _init():
+def glo_init():
     global _GLOBAL_DICT
     _GLOBAL_DICT = {}
     _GLOBAL_DICT['LOG_ID'] = 0
     _GLOBAL_DICT['RPL'] = 'no'
     _GLOBAL_DICT['LOG_SWITCH'] = 'yes'
     _GLOBAL_DICT['IQN_LIST'] = []
+
 
 def set_value(key, value):
     """ 定义一个全局变量 """
@@ -63,6 +66,9 @@ def set_glo_id_list(value):
 def append_glo_iqn_list(value):
     _GLOBAL_DICT['IQN_LIST'].append(value)
 
+def set_glo_iqn_list(value):
+    set_value('IQN_LIST', value)
+
 def glo_log():
     return get_value('LOG')
 
@@ -76,7 +82,7 @@ def glo_str():
 
 
 def glo_id():
-    return get_value('ID')
+    return get_value('ID',0)
 
 
 def glo_rpl():
