@@ -84,7 +84,7 @@ class HydraArgParse():
             '--all',
             dest='all',
             action="store_true",
-            help='Replay all'
+            help='Replay all recorded transactions'
         )
         #lun or maxlun
         self.parser_lun = sub_parser.add_parser(

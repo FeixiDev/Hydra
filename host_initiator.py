@@ -3,7 +3,6 @@ import connect
 import time
 import sundry as s
 import consts
-import log
 
 SSH = None
 
@@ -16,7 +15,6 @@ TIMEOUT = 3
 MOUNT_POINT = '/mnt'
 TARGET_IQN='iqn.2020-06.com.example:test-max-lun'
 
-
 def init_ssh():
     global SSH
     if not SSH:
@@ -24,13 +22,18 @@ def init_ssh():
     else:
         pass
 
-
 def umount_mnt():
     SSH.execute_command(f'umount {MOUNT_POINT}')
 
 def change_iqn(iqn):
     iscsi=s.Iscsi(SSH, VPLX_IP)
     iscsi.modify_iqn(iqn)
+
+def rescan_after_remove():
+    '''
+    vplx rescan after delete
+    '''
+    s.scsi_rescan(SSH, 'r')
 
 class DebugLog(object):
     def __init__(self):
@@ -159,12 +162,6 @@ class HostTest(object):
         self._write_test()
         self._read_test()
 
-
-    def host_rescan_r(self):
-        '''
-        vplx rescan after delete
-        '''
-        s.scsi_rescan(SSH, 'r')
 
 
 if __name__ == "__main__":
