@@ -416,7 +416,7 @@ class GetNewDisk():
             if result_lsscsi['sts']:
                 return result_lsscsi['rst'].decode('utf-8')
             else:
-                pwe(f'Failed to excute Command "{cmd_lsscsi}"', 4, 1)
+                pwe(f'Failed to execute command:"{cmd_lsscsi}"', 4, 1)
         else:
             handle_exception()
 
@@ -438,7 +438,7 @@ class DebugLog(object):
         if output['sts']:
             pass
         else:
-            prt(f'Can not create folder {self.dbg_folder} to stor debug log', 3, 2)
+            prt(f'Can not create folder {self.dbg_folder} to store debug log', 3, 2)
             sys.exit()
 
     def prepare_debug_log(self, cmd_list):
@@ -466,32 +466,34 @@ class Iscsi(object):
         if not self._find_session():
             if self.login():
                 return True
-        else:
-            pwl(f'The iSCSI session already logged in to {self.tgt_ip}', 3)
-            return True
+        # else:
+        #     pwl(f'The iSCSI session already logged in to {self.tgt_ip}', 2)
+        #     return True
 
     def _end_session(self,tgt_iqn):
         if self._find_session():
             if self._logout(tgt_iqn):
                 return True
-        else:
-            pwl(f'The iSCSI session already logged out to {self.tgt_ip}', 3)
-            return True
+        # else:
+        #     pwl(f'The iSCSI session already logged out to {self.tgt_ip}', 2)
+        #     return True
     
     def _logout(self,tgt_iqn):
         cmd=f'iscsiadm -m node -T {tgt_iqn} --logout'
         oprt_ip=get_oprt_id()
-        pwl(f'Start to logout "{self.tgt_ip}"', 2, '', 'start')
+        pwl(f'Start to logout {self.tgt_ip}', 2, '', 'start')
         results=get_ssh_cmd(self.SSH,'HuTg1LaQ', cmd, oprt_ip)
         if results:
             if results['sts']:
                 re_string=f'Logout of.*portal: ({self.tgt_ip}).*successful'
                 re_result=re_search(re_string,results['rst'].decode('utf-8'))
                 if re_result:
-                    pwl(f'Success in logout {self.tgt_ip}', 3, '', 'finish')
+                    pwl(f'Succeed in logging out {self.tgt_ip}', 3, '', 'finish')
                     return True
                 else:
                     pwce(f'Failed to logout {self.tgt_ip}', 3, 2)
+            else:
+                pwce(f'Failed to logout {self.tgt_ip}', 3, 2)
         else:
             handle_exception()
 
@@ -501,18 +503,19 @@ class Iscsi(object):
         '''
         oprt_id = get_oprt_id()
         cmd = f'iscsiadm -m discovery -t st -p {self.tgt_ip} -l'
-        pwl(f'Start to login "{self.tgt_ip}"', 2, '', 'start')
+        pwl(f'Start to login {self.tgt_ip}', 2, '', 'start')
         result_iscsi_login = get_ssh_cmd(self.SSH, 'rgjfYl3K', cmd, oprt_id)
         if result_iscsi_login:
             if result_iscsi_login['sts']:
                 result_iscsi_login = result_iscsi_login['rst'].decode('utf-8')
                 re_string = f'Login to.*portal: ({self.tgt_ip}).*successful'
                 if re_search(re_string, result_iscsi_login):
-                    pwl(f'Success in logging to {self.tgt_ip}',3,'','finish')
+                    pwl(f'Succeed in logging to {self.tgt_ip}',3,'','finish')
                     return True
                 else:
-                    pwce(f'Failed to login {self.tgt_ip}',3,warning_level=2)
-
+                    pwce(f'Failed to login {self.tgt_ip}', 3, 2)
+            else:
+                pwce(f'Failed to login {self.tgt_ip}', 3, 2)
         else:
             handle_exception()
 
@@ -530,12 +533,12 @@ class Iscsi(object):
                 result_session = result_session['rst'].decode('utf-8')
                 re_session = f'tcp:.*({self.tgt_ip}):.*'
                 if re_search(re_session, result_session):
-                    pwl(f'Found session connected to "{self.tgt_ip}"', 3, '', 'start')
+                    pwl(f'Found session connected to "{self.tgt_ip}"', 3, '', 'finish')
                     return True
                 else:
-                    pwl(f'Not found session connected to "{self.tgt_ip}"', 3, '', 'start')
+                    pwl(f'Not found session connected to "{self.tgt_ip}"', 3, '', 'finish')
             else:
-                pwl(f'Not found session connected to "{self.tgt_ip}"', 3, '', 'start')
+                pwl(f'Not found session connected to "{self.tgt_ip}"', 3, '', 'finish')
         else:
             handle_exception()
 
@@ -551,7 +554,7 @@ class Iscsi(object):
         results=get_ssh_cmd(self.SSH,'Uksjdkqi',cmd,oprt_id)
         if results:
             if results['sts']:
-                pwl('Success in restarting iscsi service',3,'','finish')
+                pwl('Succeed in restarting iscsi service',3,'','finish')
                 return True
             else:
                 pwe('Failed to restart iscsi service',3,2)

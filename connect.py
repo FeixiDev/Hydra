@@ -59,9 +59,7 @@ class ConnSSH(object):
     def _make_connect(self):
         self._connect()
         if not self.SSHConnection:
-            s.pwl(f'Retry to connect {self._host} via SSH',2,'','start')
-            self.logger.write_to_log(
-                'T', 'INFO', 'info', 'start', '', '  Retry connect to VersaPLX via SSH')
+            s.pwl(f'Retry to connect {self._host} via SSH', 2, '', 'start')
             self._connect()
 
     def download(self, remotepath, localpath):
@@ -86,8 +84,9 @@ class ConnSSH(object):
 
     def close(self):
         self.SSHConnection.close()
-        self.logger.write_to_log(
-            'T', 'INFO', 'info', 'finish', '', 'Close SSH connection')
+        s.pwl(f'Close SSH connection to {self._host}')
+        # self.logger.write_to_log(
+        #     'T', 'INFO', 'info', 'finish', '', 'Close SSH connection')
 
 
 class ConnTelnet(object):
@@ -138,13 +137,14 @@ class ConnTelnet(object):
     def _make_connect(self):
         self._connect()
         if not self.telnet:
-            s.pwl('Retry to connect {self._host} via Telnet',2,'','start')
+            s.pwl(f'Retry to connect {self._host} via Telnet', 2, '', 'start')
             self._connect()
 
     def close(self):
         self.telnet.close()
-        self.logger.write_to_log(
-            'INFO', 'info', '', 'Close Telnet connection.')
+        s.pwl(f'Close SSH connection to {self._host}', 2)
+        # self.logger.write_to_log(
+        #     'INFO', 'info', '', 'Close Telnet connection.')
 
 
 if __name__ == '__main__':

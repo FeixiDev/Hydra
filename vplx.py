@@ -315,10 +315,10 @@ class VplxCrm(object):
         result = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result:
             if result['sts']:
-                s.pwl(f'Succeed in creating iSCSILogicaLUnit "{lu_name}"', 3, oprt_id, 'finish')
+                s.pwl(f'Succeed in creating iSCSILogicalUnit "{lu_name}"', 3, oprt_id, 'finish')
                 return True
             else:
-                s.pwce(f'Failed to create iSCSILogicaLUnit "{lu_name}"', 3, 2)
+                s.pwce(f'Failed to create iSCSILogicalUnit "{lu_name}"', 3, 2)
         else:
             s.handle_exception()
 
@@ -333,10 +333,10 @@ class VplxCrm(object):
         result_crm = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result_crm:
             if result_crm['sts']:
-                s.pwl(f'Succeed in setting colocation of "{lu_name}"', 3, oprt_id, 'finish')
+                s.pwl(f'Succeed in setting colocation of iSCSILogicalUnit "{lu_name}"', 3, oprt_id, 'finish')
                 return True
             else:
-                s.pwce(f'Failed to set colocation of "{lu_name}"', 3, 2)
+                s.pwce(f'Failed to set colocation of iSCSILogicalUnit "{lu_name}"', 3, 2)
         else:
             s.handle_exception()
 
@@ -351,10 +351,10 @@ class VplxCrm(object):
         result_crm = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result_crm:
             if result_crm['sts']:
-                s.pwl(f'Succeed in setting order of "{lu_name}"', 3, oprt_id, 'finish')
+                s.pwl(f'Succeed in setting order of iSCSILogicalUnit "{lu_name}"', 3, oprt_id, 'finish')
                 return True
             else:
-                s.pwce(f'Failed to set order of "{lu_name}"', 3, 2)
+                s.pwce(f'Failed to set order of iSCSILogicalUnit "{lu_name}"', 3, 2)
         else:
             s.handle_exception()
     
@@ -366,10 +366,10 @@ class VplxCrm(object):
         results=s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if results:
             if results['sts']:
-                s.pwl(f'Succeed in setting portblock of "{lu_name}"', 3, oprt_id, 'finish')
+                s.pwl(f'Succeed in setting portblock of iSCSILogicalUnit "{lu_name}"', 3, oprt_id, 'finish')
                 return True
             else:
-                s.pwce(f'Failed to set portblock of "{lu_name}"', 3, 2)
+                s.pwce(f'Failed to set portblock of iSCSILogicalUnit "{lu_name}"', 3, 2)
         else:
             s.handle_exception()
 
@@ -390,7 +390,7 @@ class VplxCrm(object):
         result_cmd = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result_cmd:
             if result_cmd['sts']:
-                    s.pwl(f'Succeed in executing command to start up "{lu_name}".Wait to check resource status', 3, oprt_id, 'finish')
+                    s.pwl(f'Succeed in executing command to start up "{lu_name}".', 3, oprt_id, 'finish')
                     return True
             else:
                 s.pwce(f'Failed to start up iSCSILogicaLUnit "{lu_name}"', 3, 2)
@@ -518,8 +518,7 @@ class VplxCrm(object):
         result=s.get_ssh_cmd(SSH,'',cmd,oprt_id)
         if result:
             if result['sts']:
-                s.pwl(f'Succeed in executing command to modify allow initiator.Wait to check resource status', 3, oprt_id,
-                      'finish')
+                s.pwl(f'Succeed in executing command to modify allow initiator.', 3, oprt_id, 'finish')
                 return True
             else:
                 s.pwe(f'Failed to modify the allowed initiator of "{lu_name}"', 3, 2)

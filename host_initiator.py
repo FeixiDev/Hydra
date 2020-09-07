@@ -74,7 +74,7 @@ class HostTest(object):
         oprt_id = s.get_oprt_id()
         unique_str = '6CJ5opVX'
         cmd = f'mount {dev_name} {MOUNT_POINT}'
-        s.pwl(f'Start trying to mount "{dev_name}" to "{MOUNT_POINT}"', 2, oprt_id, 'start')
+        s.pwl(f'Start to mount "{dev_name}" to "{MOUNT_POINT}"', 2, oprt_id, 'start')
         result_mount = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result_mount:
             if result_mount['sts']:
@@ -109,7 +109,7 @@ class HostTest(object):
                     s.pwl(f'Succeed in formatting "{dev_name}"', 3, oprt_id, 'finish')
                     return True
                 else:
-                    s.pwe(f'Failed to format "{dev_name}"', 3, 2)
+                    s.pwce(f'Failed to format "{dev_name}"', 3, 2)
             else:
                 s.pwce(f'Failed to execute command:"{cmd}"', 3, 2)
         else:
@@ -150,10 +150,10 @@ class HostTest(object):
         if self._format(dev_name):
             if self._mount(dev_name):
                 return True
-            else:
-                s.pwce(f'Failed to mount device "{dev_name}"', 3, 2)
-        else:
-            s.pwce(f'Failed to format device "{dev_name}"', 3, 2)
+            # else:
+            #     s.pwce(f'Failed to mount device "{dev_name}"', 3, 2)
+        # else:
+        #     s.pwce(f'Failed to format device "{dev_name}"', 3, 2)
 
     def io_test(self):
         time.sleep(0.5)
