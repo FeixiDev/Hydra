@@ -49,7 +49,7 @@ class HydraControl():
 
         iqn = s.generate_iqn('0')
         consts.append_glo_iqn_list(iqn)
-
+        self.update_attribute('str')
         format_width = 105 if consts.glo_rpl() == 'yes' else 80
 
         host.change_iqn(iqn)
@@ -72,12 +72,12 @@ class HydraControl():
         num = 0
         format_width = 105 if consts.glo_rpl() == 'yes' else 80
         consts.set_glo_str('maxhost')
-        self.update_attribute('id')
+        self.update_attribute('id', 'str')
         try:
             self._netapp.create_map()
             self._drbd.cfg()
             while True:
-                s.prt(f'The current IQN number of max supported hosts test is {num}')
+                s.prt(f'The current IQN number of max supported Hosts test is {num}')
                 iqn = s.generate_iqn(num)
                 consts.append_glo_iqn_list(iqn)
                 res_name = f'res_{consts.glo_str()}_{consts.glo_id()}'
@@ -88,8 +88,8 @@ class HydraControl():
                     self._crm.modify_initiator_and_verify()
                 host.change_iqn(iqn)
                 self._host.io_test()
-                print(f'{"":-^{format_width}}', '\n')
                 num += 1
+                print(f'{"":-^{format_width}}', '\n')
         except consts.ReplayExit:
             print(f'{"":-^{format_width}}', '\n')
 
@@ -101,10 +101,10 @@ class HydraControl():
         id_list = s.id_str_to_list(args.id_range)
         consts.set_glo_id_list(id_list)
         consts.set_glo_str('maxhost')
-
-        random_number = args.random_number \
-            if args.random_number and args.capacity>args.random_number \
-            else args.capacity
+        self.update_attribute('str')
+        # random_number = args.random_number \
+        #     if args.random_number and args.capacity>args.random_number \
+        #     else args.capacity
 
         w = lambda x, y: x if x and x < y else y
         random_number = w(args.random_number, args.capacity)

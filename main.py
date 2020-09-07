@@ -17,7 +17,7 @@ class MyArgumentParser(argparse.ArgumentParser):
     def print_usage(self, file=None):
         logger = consts.glo_log()
         cmd = ' '.join(sys.argv[1:])
-        logger.write_to_log('F','DATA', 'INFO', 'cmd_input', '', {'valid':'0','cmd':cmd})
+        logger.write_to_log('F','DATA', 'INFO', 'user_input', '', {'valid':'0','cmd':cmd})
         logger.write_to_log('T', 'INFO', 'INFO', 'finish','', 'print usage')
         if file is None:
             file = sys.stdout
@@ -54,7 +54,7 @@ class HydraArgParse():
         sub_parser = self.parser.add_subparsers(dest='l1')
         self.parser_version = sub_parser.add_parser(
             'version',
-            help='Output current hydra version'
+            help='Show current version'
         )
 
         #replay or re
@@ -139,14 +139,14 @@ class HydraArgParse():
             action="store",
             dest="capacity",
             type=int,
-            help="The capacity of each Lun, which represents the number of hosts that can be mapped"
+            help="The capacity of each LUN, which represents the number of hosts that can be mapped"
         )
         self.parser_iqn_n2n.add_argument(
             '-n',
             action="store",
             type=int,
             dest="random_number",
-            help='The number of hosts which is select for test'
+            help='The number of hosts which is selected for test'
         )
         #del or delete
         self.parser_delete_re = sub_parser.add_parser(

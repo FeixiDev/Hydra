@@ -27,6 +27,7 @@ def umount_mnt():
 
 def change_iqn(iqn):
     iscsi=s.Iscsi(SSH, VPLX_IP)
+    s.pwl('Start to modify IQN on Host', 1, '', 'start')
     iscsi.modify_iqn(iqn)
 
 def rescan_after_remove():
@@ -43,7 +44,7 @@ class DebugLog(object):
         self.dbg = s.DebugLog(SSH, self.debug_folder, HOST)
 
     def collect_debug_sys(self):
-        cmd_debug_sys = consts.get_cmd_debug_sys(self.debug_folder, HOST)
+        cmd_debug_sys = consts.get_cmd_debug_sys(self.debug_folder)
         self.dbg.prepare_debug_log(cmd_debug_sys)
 
     def get_all_log(self, folder):
@@ -105,6 +106,7 @@ class HostTest(object):
             if result_format['sts']:
                 result_format = result_format['rst'].decode('utf-8')
                 if self._judge_format(result_format):
+                    s.pwl(f'Succeed in formatting "{dev_name}"', 3, oprt_id, 'finish')
                     return True
                 else:
                     s.pwe(f'Failed to format "{dev_name}"', 3, 2)
@@ -143,7 +145,6 @@ class HostTest(object):
         s.pwl(f'Read  Speed: {read_perf}', 3, '', 'finish')
 
     def _mount_disk(self):
-        s.pwl(f'Start to get the disk device with id {consts.glo_id()}', 2)
         gnd = s.GetNewDisk(SSH, VPLX_IP)
         dev_name = gnd.get_disk_from_vplx()
         if self._format(dev_name):

@@ -108,7 +108,7 @@ def glo_iqn_list():
     return get_value('IQN_LIST')
 
 
-def get_cmd_debug_sys(debug_folder,host):
+def get_cmd_debug_sys(debug_folder):
     cmd_debug_sys = [
             # f'dmesg > {debug_folder}/dmesg.log',
             f'echo -- date&time: >> {debug_folder}/sys_info.log',
@@ -138,14 +138,14 @@ def get_cmd_debug_sys(debug_folder,host):
         ]
     return cmd_debug_sys
 
-def get_cmd_debug_drbd(debug_folder, host):
+def get_cmd_debug_drbd(debug_folder):
     cmd_debug_drbd = [
             f'tar -cvf {debug_folder}/drbd_conf_file.tar -C /etc drbd.d',
             f'drbdadm status >> {debug_folder}/drbd.log',
         ]
     return cmd_debug_drbd
 
-def get_cmd_debug_crm(debug_folder, host):
+def get_cmd_debug_crm(debug_folder):
     cmd_debug_crm = [
             f'crm res show >> {debug_folder}/crm.log'
         ]
