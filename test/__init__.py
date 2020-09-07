@@ -5,7 +5,7 @@ import log
 import sundry as s
 
 sys.path.append('../')
-consts._init()
+consts.glo_init()
 
 transaction_id = s.get_transaction_id()
 logger = log.Log(transaction_id)

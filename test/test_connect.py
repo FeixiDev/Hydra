@@ -29,9 +29,9 @@ class TestConnSSH:
         stsdir = self.ssh.execute_command('pwd')
         assert stsdir['sts'] == 1
 
-    def test_ssh_connect(self):
+    def test_make_connect(self):
         self.ssh.SSHConnection = None
-        self.ssh.ssh_connect()
+        self.ssh._make_connect()
         assert self.ssh.SSHConnection != None
 
     def test_download(self):
@@ -67,9 +67,9 @@ class TestConnTelnet:
     def test_execute_command(self):
         assert self.telnet.execute_command('lun show') != None
 
-    def test_telnet_connect(self):
+    def test_make_connect(self):
         self.telnet.telnet = telnetlib.Telnet()
-        assert self.telnet.telnet_connect() == None
+        assert self.telnet._make_connect() == None
 
     def test_close(self):
         pass

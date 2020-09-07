@@ -1,8 +1,8 @@
 import consts
 
 
-def test_init():
-    assert consts._init() == None
+def test_glo_init():
+    assert consts.glo_init() == None
     assert consts._GLOBAL_DICT == {'IQN_LIST': [],
                                    'LOG_ID': 0, 'LOG_SWITCH': 'yes', 'RPL': 'no'}
 

@@ -26,35 +26,39 @@ class TestStorage:
     def setup_class(self):
         storage.init_telnet()
         self.storage = storage.Storage()
-        self.oprt_id = s.get_oprt_id()
+        self.storage.id = 99
+        self.storage.str = 'pytest'
+        
+    def test_create_map(self):
+        assert self.storage.create_map() == None
+        self.storage._unmap_lun('pytest_99')
+        self.storage._destroy_lun('pytest_99')
 
-    def test_ex_telnet_cmd(self):
-        assert self.storage._ex_telnet_cmd('pytest', 'lun show', self.oprt_id)
 
-    def test_lun_create(self):
-        assert self.storage.lun_create() == None
-        self.storage.lun_destroy('pytest_99')
+    def test_create_lun(self):
+        assert self.storage._create_lun('pytest_99') == None
+        self.storage._destroy_lun('pytest_99')
 
-    def test_lun_map(self):
-        self.storage.lun_create()
-        assert self.storage.lun_map() == None
-        self.storage.lun_unmap('pytest_99')
-        self.storage.lun_destroy('pytest_99')
+    def test_map_lun(self):
+        self.storage._create_lun('pytest_99')
+        assert self.storage._map_lun('pytest_99') == None
+        self.storage._unmap_lun('pytest_99')
+        self.storage._destroy_lun('pytest_99')
 
-    def test_lun_unmap(self):
-        self.storage.lun_create()
-        self.storage.lun_map()
-        assert self.storage.lun_unmap('pytest_99') == True
-        self.storage.lun_destroy('pytest_99')
+    def test_unmap_lun(self):
+        self.storage._create_lun('pytest_99')
+        self.storage._map_lun('pytest_99')
+        assert self.storage._unmap_lun('pytest_99') == True
+        self.storage._destroy_lun('pytest_99')
 
-    def test_lun_destroy(self):
-        self.storage.lun_create()
-        assert self.storage.lun_destroy('pytest_99') == True
+    def test__destroy_lun(self):
+        self.storage._create_lun('pytest_99')
+        assert self.storage._destroy_lun('pytest_99') == True
 
     def test_get_all_cfgd_lun(self):
         assert self.storage.get_all_cfgd_lun()
 
-    def test_del_all(self):
-        self.storage.lun_create()
-        self.storage.lun_map()
-        assert self.storage.del_all(['pytest_99']) == None
+    def test_del_luns(self):
+        self.storage._create_lun('pytest_99')
+        self.storage._map_lun('pytest_99')
+        assert self.storage.del_luns(['pytest_99']) == None
