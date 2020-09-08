@@ -11,6 +11,8 @@ import traceback
 
 import debug_log
 
+FORMAT_WIDTH = 80
+
 class HydraControl():
     def __init__(self):
         consts.glo_init()
@@ -50,27 +52,27 @@ class HydraControl():
         iqn = s.generate_iqn('0')
         consts.append_glo_iqn_list(iqn)
         self.update_attribute('str')
-        format_width = 105 if consts.glo_rpl() == 'yes' else 80
+        # format_width = 105 if consts.glo_rpl() == 'yes' else 80
 
         host.change_iqn(iqn)
         for lun_id in id_list:
             consts.set_glo_id(lun_id)
             self.update_attribute('id')
-            print(f'**** Start working for ID {lun_id} ****'.center(format_width, '='))
+            print(f'**** Start working for ID {lun_id} ****'.center(FORMAT_WIDTH, '='))
             try:
                 self._netapp.create_map()
                 self._drbd.cfg()
                 self._crm.cfg()
                 self._host.io_test()
-                print(f'{"":-^{format_width}}', '\n')
+                print(f'{"":-^{FORMAT_WIDTH}}', '\n')
             except consts.ReplayExit:
-                print(f'{"":-^{format_width}}', '\n')
+                print(f'{"":-^{FORMAT_WIDTH}}', '\n')
 
     @s.record_exception
     def iqn_o2n(self, args):
         self.initialize_class()
         num = 0
-        format_width = 105 if consts.glo_rpl() == 'yes' else 80
+        # format_width = 105 if consts.glo_rpl() == 'yes' else 80
         consts.set_glo_str('maxhost')
         self.update_attribute('id', 'str')
         try:
@@ -89,9 +91,9 @@ class HydraControl():
                 host.change_iqn(iqn)
                 self._host.io_test()
                 num += 1
-                print(f'{"":-^{format_width}}', '\n')
+                print(f'{"":-^{FORMAT_WIDTH}}', '\n')
         except consts.ReplayExit:
-            print(f'{"":-^{format_width}}', '\n')
+            print(f'{"":-^{FORMAT_WIDTH}}', '\n')
 
     @s.record_exception
     def iqn_n2n(self, args):
@@ -109,14 +111,14 @@ class HydraControl():
         w = lambda x, y: x if x and x < y else y
         random_number = w(args.random_number, args.capacity)
 
-        format_width = 105 if consts.glo_rpl() == 'yes' else 80
+        # format_width = 105 if consts.glo_rpl() == 'yes' else 80
 
         for lun_id in id_list:
             consts.set_glo_id(lun_id)
             self.update_attribute('id')
             s.generate_iqn_list(args.capacity)
 
-            print(f'**** Start working for ID {lun_id} ****'.center(format_width, '='))
+            print(f'**** Start working for ID {lun_id} ****'.center(FORMAT_WIDTH, '='))
             try:
                 self._netapp.create_map()
                 self._drbd.cfg()
@@ -124,9 +126,9 @@ class HydraControl():
                 for iqn in s.pick_iqns_random(random_number):
                     host.change_iqn(iqn)
                     self._host.io_test()
-                    print(f'{"":-^{format_width}}', '\n')
+                    print(f'{"":-^{FORMAT_WIDTH}}', '\n')
             except consts.ReplayExit:
-                print(f'{"":-^{format_width}}', '\n')
+                print(f'{"":-^{FORMAT_WIDTH}}', '\n')
 
     def delete_resource(self, args):
         '''
@@ -162,7 +164,7 @@ class HydraControl():
                 # remove all deleted disk device on vplx and host
                 vplx.rescan_after_remove()
                 host.rescan_after_remove()
-                print(f'{"":-^80}', '\n')
+                print(f'{"":-^{FORMAT_WIDTH}}', '\n')
             else:
                 s.pwe('User canceled deleting proccess ...', 2, 2)
         else:
@@ -170,6 +172,8 @@ class HydraControl():
             s.pwe('No qualified resources to be delete.', 2, 2)
 
     def replay(self, args, replay_obj, parser_obj):
+        global FORMAT_WIDTH
+        FORMAT_WIDTH = 105
         consts.set_glo_rpl('yes')
         consts.set_glo_log_switch('no')
         logdb.prepare_db()
