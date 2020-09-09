@@ -28,12 +28,11 @@ class TestStorage:
         self.storage = storage.Storage()
         self.storage.id = 99
         self.storage.str = 'pytest'
-        
+
     def test_create_map(self):
         assert self.storage.create_map() == None
         self.storage._unmap_lun('pytest_99')
         self.storage._destroy_lun('pytest_99')
-
 
     def test_create_lun(self):
         assert self.storage._create_lun('pytest_99') == None

@@ -1,6 +1,15 @@
 import main
 
 
+class TestMyArgumentParser:
+
+    def setup_class(self):
+        self.ap = main.MyArgumentParser()
+
+    def test_parse_args(self):
+        pass
+
+
 class TestHydraArgParse:
 
     def setup_class(self):
