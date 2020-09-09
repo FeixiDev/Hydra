@@ -1,29 +1,57 @@
 import re
 import os
 import sqlite3
-import pprint
 import consts
 
-list_cmd = []
-
+LOG_PATH = "./Hydra_log.log"
+LOG_FILE_NAME = 'Hydra_log.log'
 
 def prepare_db():
     db = LogDB()
-    db.get_logdb()
     consts.set_glo_db(db)
+    _fill_db_with_log()
 
 
 def isFileExists(strfile):
     # 检查文件是否存在
     return os.path.isfile(strfile)
 
+def _fill_db_with_log():
+    id = (None,)
+    re_ = re.compile(r'\[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?\]?)\]\|',
+                     re.DOTALL)
 
-def get_target_file(filename):
+    db = consts.glo_db()
+    all_log_data = _read_log_files()
+    all_data = re_.findall(all_log_data)
+
+    for data in all_data:
+        data = id + data
+        print(data)
+        db.insert_data(data)
+
+    db.con.commit()
+
+
+
+def _read_log_files():
+    all_data = ''
+    if not isFileExists(LOG_PATH):
+        print('no log file')
+        return
+    for file in _get_log_files(LOG_FILE_NAME):
+        f = open('./' + file)
+        data = f.read()
+        all_data+=data
+        f.close()
+    return all_data
+
+
+def _get_log_files(base_log_file):
     list_file = []
-    file_last = None
     all_file = (os.listdir('.'))
     for file in all_file:
-        if filename in file:
+        if base_log_file in file:
             list_file.append(file)
     list_file.sort(reverse=True)
     return list_file
@@ -64,17 +92,20 @@ class LogDB():
     def __init__(self):
         self.con = sqlite3.connect("logDB.db", check_same_thread=False)
         self.cur = self.con.cursor()
+        self._drop_table()
+        self._create_table()
 
-    def insert(self, data):
+    def insert_data(self, data):
         self.cur.execute(self.insert_sql, data)
 
-    def drop_tb(self):
+    def _create_table(self):
+        self.cur.execute(self.create_table_sql)
+        self.con.commit()
+
+    def _drop_table(self):
         self.cur.execute(self.drop_table_sql)
         self.con.commit()
 
-    def select_all(self):
-        self.cur.execute("SELECT * FROM logtable")
-        return self.cur.fetchall()
 
     # 获取表单行数据的通用方法
     def sql_fetch_one(self, sql):
@@ -124,8 +155,6 @@ class LogDB():
         sql = f"SELECT data FROM logtable WHERE describe1 = 'unique_str' and transaction_id = '{transaction_id}'"
         string = self.sql_fetch_one(sql)
         return (string, _id)
-        # re_ = re.compile(r'Start to create lun, name: (.*)_(.*)')
-        # return re_.findall(result[0])
 
     def get_info_start(self, oprt_id):
         # 通过oprt_id，获取到INFO start信息
@@ -137,7 +166,6 @@ class LogDB():
         sql = f"SELECT data FROM logtable WHERE type1 = 'INFO' and describe1 = 'finish' and describe2 = '{oprt_id}'"
         return self.sql_fetch_one(sql)
 
-    #-m:via? with
     def get_transaction_id_via_date(self, date_start, date_end):
         # 获取一个时间段内的全部事务id
         sql = f"SELECT DISTINCT transaction_id FROM logtable WHERE time >= '{date_start}' and time <= '{date_end}'"
@@ -187,44 +215,8 @@ class LogDB():
         sql = f"SELECT data FROM logtable WHERE transaction_id = '{transaction_id}' and id = {db_id}"
         return self.sql_fetch_one(sql)
 
-    def get_logdb(self):
-        self.drop_tb()
-        self.cur.execute(self.create_table_sql)
-        self.con.commit()
-        log_path = "./Hydra_log.log"
-        logfilename = 'Hydra_log.log'
-        id = (None,)
-        re_ = re.compile(r'\[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?)\] \[(.*?\]?)\]\|',
-                         re.DOTALL)
-        if not isFileExists(log_path):
-            print('no file')
-            return
-        for file in get_target_file(logfilename):
-            f = open('./' + file)
-            content = f.read()
-            file_data = re_.findall(content)
-            for data_one in file_data:
-                data = id + data_one
-                self.insert(data)
-            f.close()
-
-        self.con.commit()
-        # self.con.close()
-
 
 if __name__ == '__main__':
-    db = LogDB()
-    db.get_logdb()
-    # print(db.find_oprt_id_via_string('1594878912', 'V9jGOP2v'))
-    # print(db.get_string_id('1594963387'))
-    # print(db.get_time_via_unique_str('1595209399','jMPFwXy2'))
-    # print(db.get_time_via_str('1595209399','123213'))
-    # print(db.get_exception('1595296861'))
-    # print(db.get_cmd_result(''))
-    # print(db.get_time_via_str('1595396085','Start iscsi login'))
-    # print(db.get_last_one('1595409897'))
-    print(db.get_all_transaction())
-    # print(db.get_oprt_id_via_db_id(''))
-    # print(db.get_time_via_str('1595295584','Start to create lun, name: log_test_203'))
-    # print(db.get_cmd_via_tid('1594879092'))
-    # res = db.get_transaction_id_via_date('2021/07/13 13:45:57','2021/07/13 13:51:55')
+    pass
+
+
