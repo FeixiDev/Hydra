@@ -3,7 +3,6 @@ import connect
 import time
 import sundry as s
 import consts
-import log
 
 SSH = None
 
@@ -16,7 +15,6 @@ TIMEOUT = 3
 MOUNT_POINT = '/mnt'
 TARGET_IQN='iqn.2020-06.com.example:test-max-lun'
 
-
 def init_ssh():
     global SSH
     if not SSH:
@@ -24,10 +22,19 @@ def init_ssh():
     else:
         pass
 
-
 def umount_mnt():
     SSH.execute_command(f'umount {MOUNT_POINT}')
 
+def change_iqn(iqn):
+    iscsi=s.Iscsi(SSH, VPLX_IP)
+    s.pwl('Start to modify IQN on Host', 1, '', 'start')
+    iscsi.modify_iqn(iqn)
+
+def rescan_after_remove():
+    '''
+    vplx rescan after delete
+    '''
+    s.scsi_rescan(SSH, 'r')
 
 class DebugLog(object):
     def __init__(self):
@@ -37,7 +44,7 @@ class DebugLog(object):
         self.dbg = s.DebugLog(SSH, self.debug_folder, HOST)
 
     def collect_debug_sys(self):
-        cmd_debug_sys = consts.get_cmd_debug_sys(self.debug_folder, HOST)
+        cmd_debug_sys = consts.get_cmd_debug_sys(self.debug_folder)
         self.dbg.prepare_debug_log(cmd_debug_sys)
 
     def get_all_log(self, folder):
@@ -54,19 +61,11 @@ class HostTest(object):
         self.rpl = consts.glo_rpl()
         self._prepare()
         self.iscsi=s.Iscsi(SSH,VPLX_IP)
-      
-    def modify_host_iqn(self, initiator_iqn):
-        if self.iscsi.modify_host_iqn(initiator_iqn):
-            if self.iscsi.restart_service():
-                return True
 
     def _prepare(self):
         if self.rpl == 'no':
             init_ssh()
             umount_mnt()
-            # self._create_iscsi_session()
-        if self.rpl == 'yes':
-            pass
 
     def _mount(self, dev_name):
         '''
@@ -75,7 +74,7 @@ class HostTest(object):
         oprt_id = s.get_oprt_id()
         unique_str = '6CJ5opVX'
         cmd = f'mount {dev_name} {MOUNT_POINT}'
-        s.pwl(f'Start trying to mount "{dev_name}" to "{MOUNT_POINT}"', 2, oprt_id, 'start')
+        s.pwl(f'Start to mount "{dev_name}" to "{MOUNT_POINT}"', 2, oprt_id, 'start')
         result_mount = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result_mount:
             if result_mount['sts']:
@@ -107,9 +106,10 @@ class HostTest(object):
             if result_format['sts']:
                 result_format = result_format['rst'].decode('utf-8')
                 if self._judge_format(result_format):
+                    s.pwl(f'Succeed in formatting "{dev_name}"', 3, oprt_id, 'finish')
                     return True
                 else:
-                    s.pwe(f'Failed to format "{dev_name}"', 3, 2)
+                    s.pwce(f'Failed to format "{dev_name}"', 3, 2)
             else:
                 s.pwce(f'Failed to execute command:"{cmd}"', 3, 2)
         else:
@@ -145,30 +145,24 @@ class HostTest(object):
         s.pwl(f'Read  Speed: {read_perf}', 3, '', 'finish')
 
     def _mount_disk(self):
-        s.pwl(f'Start to get the disk device with id {consts.glo_id()}', 2)
         gnd = s.GetNewDisk(SSH, VPLX_IP)
         dev_name = gnd.get_disk_from_vplx()
         if self._format(dev_name):
             if self._mount(dev_name):
                 return True
-            else:
-                s.pwce(f'Failed to mount device "{dev_name}"', 3, 2)
-        else:
-            s.pwce(f'Failed to format device "{dev_name}"', 3, 2)
+            # else:
+            #     s.pwce(f'Failed to mount device "{dev_name}"', 3, 2)
+        # else:
+        #     s.pwce(f'Failed to format device "{dev_name}"', 3, 2)
 
     def io_test(self):
+        time.sleep(0.5)
         s.pwl('Start to format，write and read the LUN on Host', 0, s.get_oprt_id(), 'start')
         self._mount_disk()
         s.pwl(f'Start speed test', 2, '', 'start')
         self._write_test()
         self._read_test()
 
-
-    def host_rescan_r(self):
-        '''
-        vplx rescan after delete
-        '''
-        s.scsi_rescan(SSH, 'r')
 
 
 if __name__ == "__main__":
