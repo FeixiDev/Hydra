@@ -27,7 +27,6 @@ def _fill_db_with_log():
 
     for data in all_data:
         data = id + data
-        print(data)
         db.insert_data(data)
 
     db.con.commit()
