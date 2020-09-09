@@ -40,8 +40,8 @@ class Storage:
     def __init__(self):
         self.rpl = consts.glo_rpl()
         self.TID = consts.glo_tsc_id()
-        self.id = None
-        self.str = None
+        self.id = consts.glo_id()
+        self.str = consts.glo_str()
         self.logger = consts.glo_log()
         if self.rpl == 'no':
             init_telnet()
@@ -52,7 +52,6 @@ class Storage:
         self._create_lun(lun_name)
         self._map_lun(lun_name)
 
-
     def _create_lun(self, lun_name):
         '''
         Create LUN with 10M bytes in size
@@ -62,7 +61,7 @@ class Storage:
         cmd = f'lun create -s 10m -t linux /vol/esxi/{lun_name}'
         info_msg = f'Start to create LUN, LUN name: "{lun_name}",LUN ID: "{self.id}"'
         s.pwl(f'{info_msg}', 2, oprt_id, 'start')
-        result = s.ex_telnet_cmd(TELNET_CONN, unique_str, cmd, oprt_id)
+        result = s.get_telnet_cmd(TELNET_CONN, unique_str, cmd, oprt_id)
         if result:
             s.pwl(f'Succeed in creating LUN "{lun_name}"', 3, oprt_id, 'finish')
         else:
@@ -77,14 +76,14 @@ class Storage:
         info_msg = f'Start to map LUN, LUN name: "{lun_name}", LUN ID: "{self.id}"'
         cmd = f'lun map /vol/esxi/{lun_name} hydra {self.id}'
         s.pwl(f'{info_msg}', 2, oprt_id, 'start')
-        result = s.ex_telnet_cmd(TELNET_CONN, unique_str, cmd, oprt_id)
+        result = s.get_telnet_cmd(TELNET_CONN, unique_str, cmd, oprt_id)
         if result:
             re_string=f'LUN /vol/esxi/{lun_name} was mapped to initiator group hydra={self.id}'
             re_result=s.re_search(re_string, result)
             if re_result:
                 s.pwl(f'Finish mapping LUN "{lun_name}" to VersaPLX', 3, oprt_id, 'finish')
             else:
-                s.pwce(f'Failed to map LUN "{lun_name}"', 3, 2)
+                s.pwe(f'Failed to map LUN "{lun_name}"', 3, 2)
         else:
             s.handle_exception()
 
@@ -95,19 +94,19 @@ class Storage:
         unique_str = '2ltpi6N5'
         oprt_id = s.get_oprt_id()
         unmap = f'lun unmap /vol/esxi/{lun_name} hydra'
-        unmap_result = s.ex_telnet_cmd(TELNET_CONN, unique_str, unmap, oprt_id)
+        s.pwl(f'Start to unmap LUN "{lun_name}" on NetApp', 2, oprt_id, 'start')
+        unmap_result = s.get_telnet_cmd(TELNET_CONN, unique_str, unmap, oprt_id)
         if unmap_result:
             unmap_re = r'unmapped from initiator group hydra'
             re_result = s.re_search(unmap_re, unmap_result)
             if re_result:
-                s.pwl(f'Unmap the lun /vol/esxi/{lun_name}  successfully',2)
+                s.pwl(f'Succeed in unmapping LUN "{lun_name}" on NetApp', 3, oprt_id, 'finish')
                 return True
             else:
                 # -m:只有在出错之后才打印和记录,不过不退出.正常完成的不记录
-                s.pwe(f'Can not unmap lun {lun_name}',2,1)
-                # print(f'can not unmap lun {lun_name}')
+                s.pwe(f'Failed to unmap LUN "{lun_name}" on NetApp', 3, 1)
         else:
-            print('Unmap command execute failed')
+            s.handle_exception()
 
     def _destroy_lun(self, lun_name):
         '''
@@ -116,22 +115,23 @@ class Storage:
         unique_str = '2ltpi6N3'
         oprt_id = s.get_oprt_id()
         destroy_cmd = f'lun destroy /vol/esxi/{lun_name}'
-        destroy_result = s.ex_telnet_cmd(TELNET_CONN, unique_str, destroy_cmd, oprt_id)
+        s.pwl(f'Start to destroy LUN "{lun_name}" on NetApp', 2, oprt_id, 'start')
+        destroy_result = s.get_telnet_cmd(TELNET_CONN, unique_str, destroy_cmd, oprt_id)
         if destroy_result:
             re_destroy = f'LUN /vol/esxi/{lun_name} destroyed'
             re_result = s.re_search(re_destroy, destroy_result)
             if re_result:
-                s.pwl(f'Destroy the lun /vol/esxi/{lun_name} successfully',2)
+                s.pwl(f'Succeed in destroying LUN "{lun_name}" on NetApp', 3, oprt_id, 'finish')
                 return True
             else:
-                s.pwe(f'Can not destroy lun {lun_name}',2,1)
+                s.pwe(f'Failed to destroy LUN "{lun_name}" on NetApp', 3, 1)
         else:
-            print('Destroy command execute failed')
+            s.handle_exception()
 
     def get_all_cfgd_lun(self):
         # get list of all configured luns
         cmd_lun_show = 'lun show'
-        show_result = s.ex_telnet_cmd(TELNET_CONN,
+        show_result = s.get_telnet_cmd(TELNET_CONN,
             '2lYpiKm3', cmd_lun_show, s.get_oprt_id())
         if show_result:
             re_lun = f'/vol/esxi/(\w*_[0-9]{{1,3}})'

@@ -13,7 +13,6 @@ class ConnSSH(object):
     '''
     def __init__(self, host, port, username, password, timeout):
         self.logger = consts.glo_log()
-        self.logger.d1 = host
         self._host = host
         self._port = port
         self._timeout = timeout
@@ -25,7 +24,7 @@ class ConnSSH(object):
 
     def _connect(self):
         oprt_id = s.get_oprt_id()
-        s.pwl(f'Start to connect {self._host} via SSH', 2, oprt_id, 'start')
+        s.pwl(f'Start to connect {self._host} via SSH', 1, oprt_id, 'start')
         self.logger.write_to_log('F', 'DATA', 'value', 'dict', 'data for SSH connect',
                                  {'host': self._host, 'port': self._port, 'username': self._username,
                                   'password': self._password})
@@ -60,9 +59,7 @@ class ConnSSH(object):
     def _make_connect(self):
         self._connect()
         if not self.SSHConnection:
-            s.pwl(f'Retry to connect {self._host} via SSH',2,'','start')
-            self.logger.write_to_log(
-                'T', 'INFO', 'info', 'start', '', '  Retry connect to VersaPLX via SSH')
+            s.pwl(f'Retry to connect {self._host} via SSH', 2, '', 'start')
             self._connect()
 
     def download(self, remotepath, localpath):
@@ -87,8 +84,9 @@ class ConnSSH(object):
 
     def close(self):
         self.SSHConnection.close()
-        self.logger.write_to_log(
-            'T', 'INFO', 'info', 'finish', '', 'Close SSH connection')
+        s.pwl(f'Close SSH connection to {self._host}')
+        # self.logger.write_to_log(
+        #     'T', 'INFO', 'info', 'finish', '', 'Close SSH connection')
 
 
 class ConnTelnet(object):
@@ -109,13 +107,12 @@ class ConnTelnet(object):
     def _connect(self):
         try:
             oprt_id = s.get_oprt_id()
-
-            s.pwl('Start to connect NetApp via Telnet', 2, oprt_id, 'start')
+            s.pwl(f'Start to connect {self._host} via Telnet', 1, oprt_id, 'start')
             # -m:DATA,Telnet,connect,dict
             self.logger.write_to_log('F', 'DATA', 'value', 'dict', 'data for telnet connect',
                                      {'host': self._host, 'port': self._port, 'username': self._username,
                                       'password': self._password})
-            self.telnet.open(self._host, self._port)
+            self.telnet.open(self._host, self._port, timeout=self._timeout)
             self.telnet.read_until(b'Username:', timeout=1)
             self.telnet.write(self._username.encode() + b'\n')
             self.telnet.read_until(b'Password:', timeout=1)
@@ -130,23 +127,24 @@ class ConnTelnet(object):
 
     # 定义exctCMD函数,用于执行命令
     def execute_command(self, cmd):
-        self.telnet.read_until(b'fas270>').decode()
+        self.telnet.read_until(b'fas270>', timeout=self._timeout).decode()
         self.telnet.write(cmd.encode().strip() + b'\r')
         time.sleep(0.1)
-        rely = self.telnet.read_until(b'fas270>').decode()
+        rely = self.telnet.read_until(b'fas270>', timeout=self._timeout).decode()
         self.telnet.write(b'\r')
         return rely
 
     def _make_connect(self):
         self._connect()
         if not self.telnet:
-            s.pwl('Retry to connect {self._host} via Telnet',2,'','start')
+            s.pwl(f'Retry to connect {self._host} via Telnet', 2, '', 'start')
             self._connect()
 
     def close(self):
         self.telnet.close()
-        self.logger.write_to_log(
-            'INFO', 'info', '', 'Close Telnet connection.')
+        s.pwl(f'Close SSH connection to {self._host}', 2)
+        # self.logger.write_to_log(
+        #     'INFO', 'info', '', 'Close Telnet connection.')
 
 
 if __name__ == '__main__':
