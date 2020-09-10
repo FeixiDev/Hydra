@@ -1,168 +1,170 @@
 # coding:utf-8
-
-import connect as c
-import re
-import sys
+import connect
 import time
 import sundry as s
+import consts
 
-vplx_ip = '10.203.1.199'
-host = '10.203.1.200'
-port = '22'
-user = 'root'
-password = 'password'
-timeout = 3
+SSH = None
 
-mount_point = '/mnt'
+VPLX_IP = '10.203.1.199'
+HOST = '10.203.1.200'
+PORT = 22
+USER = 'root'
+PASSWORD = 'password'
+TIMEOUT = 3
+MOUNT_POINT = '/mnt'
+TARGET_IQN='iqn.2020-06.com.example:test-max-lun'
+
+def init_ssh():
+    global SSH
+    if not SSH:
+        SSH = connect.ConnSSH(HOST, PORT, USER, PASSWORD, TIMEOUT)
+    else:
+        pass
+
+def umount_mnt():
+    SSH.execute_command(f'umount {MOUNT_POINT}')
+
+def change_iqn(iqn):
+    iscsi=s.Iscsi(SSH, VPLX_IP)
+    s.pwl('Start to modify IQN on Host', 1, '', 'start')
+    iscsi.modify_iqn(iqn)
+
+def rescan_after_remove():
+    '''
+    vplx rescan after delete
+    '''
+    s.scsi_rescan(SSH, 'r')
+
+class DebugLog(object):
+    def __init__(self):
+        init_ssh()
+        self.tid = consts.glo_tsc_id()
+        self.debug_folder = f'/var/log/{self.tid}'
+        self.dbg = s.DebugLog(SSH, self.debug_folder, HOST)
+
+    def collect_debug_sys(self):
+        cmd_debug_sys = consts.get_cmd_debug_sys(self.debug_folder)
+        self.dbg.prepare_debug_log(cmd_debug_sys)
+
+    def get_all_log(self, folder):
+        local_file = f'{folder}/{HOST}.tar'
+        self.dbg.get_debug_log(local_file)
 
 
 class HostTest(object):
     '''
     Format, write, and read iSCSI LUN
     '''
+    def __init__(self):
+        self.logger = consts.glo_log()
+        self.rpl = consts.glo_rpl()
+        self._prepare()
+        self.iscsi=s.Iscsi(SSH,VPLX_IP)
 
-    def __init__(self, unique_id):
-        self.ssh = c.ConnSSH(host, port, user, password, timeout)
-        self.id = unique_id
+    def _prepare(self):
+        if self.rpl == 'no':
+            init_ssh()
+            umount_mnt()
 
-    def iscsi_login(self):
+    def _mount(self, dev_name):
         '''
-        Discover iSCSI and login to session
+        Mount disk
         '''
-        login_cmd = f'iscsiadm -m discovery -t st -p {vplx_ip} -l'
-        login_result = self.ssh.excute_command(login_cmd)
-        if login_result:
-            login_result = login_result.decode('utf-8')
-            re_login = re.compile(
-                f'Login to.*portal: ({vplx_ip}).*successful')
-            re_result = re_login.findall(login_result)
-            if re_result:
+        oprt_id = s.get_oprt_id()
+        unique_str = '6CJ5opVX'
+        cmd = f'mount {dev_name} {MOUNT_POINT}'
+        s.pwl(f'Start to mount "{dev_name}" to "{MOUNT_POINT}"', 2, oprt_id, 'start')
+        result_mount = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
+        if result_mount:
+            if result_mount['sts']:
+                s.pwl(f'Disk "{dev_name}" mounted to "{MOUNT_POINT}"', 3, oprt_id, 'finish')
                 return True
             else:
-                s.pe(f'iscsi login to {vplx_ip} failed')
-
-    def find_session(self):
-        '''
-        Execute the command and check up the status of session
-        '''
-        session_cmd = 'iscsiadm -m session'
-        session_result = self.ssh.excute_command(session_cmd)
-        if session_result:
-            session_result = session_result.decode('utf-8')
-            re_session = re.compile(f'tcp:.*({vplx_ip}):.*')
-            re_result = re_session.findall(session_result)
-            if re_result:
-                return True
-
-    # def _find_device(self, command_result):
-    #     '''
-    #     Use re to find device_path
-    #     '''
-    #     re_find_id_dev = re.compile(
-    #         r'\:(\d*)\].*LIO-ORG[ 0-9a-zA-Z._]*(/dev/sd[a-z]{1,3})')
-    #     re_result = re_find_id_dev.findall(command_result)
-
-    #     # [('0', '/dev/sdb'), ('1', '/dev/sdc')]
-    #     if re_result:
-    #         dic_result = dict(re_result)
-    #         if str(self.id) in dic_result.keys():
-    #             dev_path = dic_result[str(self.id)]
-    #             return dev_path
-
-    def explore_disk(self):
-        '''
-         Scan and get the device path from VersaPLX
-        '''
-        if self.ssh.excute_command('/usr/bin/rescan-scsi-bus.sh'):
-            time.sleep(0.5)
-            lsscsi_result = self.ssh.excute_command('lsscsi')
+                s.pwce(f'Failed to mount "{dev_name}" to "{MOUNT_POINT}"', 3, 2)
         else:
-            s.pe(f'Scan new LUN failed on VersaPLX')
-        re_find_id_dev = r'\:(\d*)\].*LIO-ORG[ 0-9a-zA-Z._]*(/dev/sd[a-z]{1,3})'
-        return s.GetDiskPath(self.id, re_find_id_dev, lsscsi_result, 'VersaPLX').explore_disk()
+            s.handle_exception()
 
-    def _judge_format(self, arg_bytes):
+    def _judge_format(self, string):
         '''
         Determine the format status
         '''
-        re_done = re.compile(r'done')
-        string = arg_bytes.decode('utf-8')
-        if len(re_done.findall(string)) == 4:
+        re_string = r'done'
+        re_resulgt = s.re_findall(re_string, string)
+        if len(re_resulgt) == 4:
             return True
 
-    def format_mount(self, dev_name):
+    def _format(self, dev_name):
         '''
         Format disk and mount disk
         '''
-        format_cmd = f'mkfs.ext4 {dev_name} -F'
-        cmd_result = self.ssh.excute_command(format_cmd)
-        if self._judge_format(cmd_result):
-            mount_cmd = f'mount {dev_name} {mount_point}'
-            if self.ssh.excute_command(mount_cmd) == True:
-                return True
+        cmd = f'mkfs.ext4 {dev_name} -F'
+        oprt_id = s.get_oprt_id()
+        s.pwl(f'Start to format "{dev_name}"', 2, oprt_id, 'start')
+        result_format = s.get_ssh_cmd(SSH, '7afztNL6', cmd, oprt_id)
+        if result_format:
+            if result_format['sts']:
+                result_format = result_format['rst'].decode('utf-8')
+                if self._judge_format(result_format):
+                    s.pwl(f'Succeed in formatting "{dev_name}"', 3, oprt_id, 'finish')
+                    return True
+                else:
+                    s.pwce(f'Failed to format "{dev_name}"', 3, 2)
             else:
-                s.pe(f"mount {dev_name} to {mount_point} failed")
-
+                s.pwce(f'Failed to execute command:"{cmd}"', 3, 2)
         else:
-            s.pe("format disk %s failed" % dev_name)
+            s.handle_exception()
 
-    def _get_dd_perf(self, arg_str):
+    def _get_test_perf(self, cmd_dd, unique_str):
         '''
-        Use re to get the speed of test
+        Use regular to get the speed of test
         '''
-        re_performance = re.compile(r'.*s, ([0-9.]* [A-Z]B/s)')
-        string = arg_str.decode('utf-8')
-        re_result = re_performance.findall(string)
-        perf = re_result
-        if perf:
-            return perf[0]
+        result_dd = s.get_ssh_cmd(SSH, unique_str, cmd_dd, s.get_oprt_id())
+        result_dd = result_dd['rst'].decode('utf-8')
+        re_performance = r'.*s, ([0-9.]* [A-Z]B/s)'
+        re_result = s.re_findall(re_performance, result_dd)
+        # 正则相关的暂时不做记录
+        # self.logger.write_to_log('T', 'OPRT', 'regular', 'findall', oprt_id, {
+        #                          re_performance: result_dd})
+        if re_result:
+            dd_perf = re_result[0]
+            # self.logger.write_to_log(
+            #     'F', 'DATA', 'regular', 'findall', oprt_id, dd_perf)
+            return dd_perf
         else:
-            s.pe('Can not get test result')
+            s.pwce('Can not get test result', 3, 2)
 
-    def write_test(self):
-        '''
-        Execute command for write test
-        '''
-        test_cmd = f'dd if=/dev/zero of={mount_point}/t.dat bs=512k count=16'
-        test_result = self.ssh.excute_command(test_cmd)
+    def _write_test(self):
+        cmd_dd_write = f'dd if=/dev/zero of={MOUNT_POINT}/t.dat bs=512k count=16'
+        write_perf = self._get_test_perf(cmd_dd_write, unique_str='CwS9LYk0')
+        s.pwl(f'Write Speed: {write_perf}', 3, '', 'finish')
+
+    def _read_test(self):
+        cmd_dd_read = f'dd if={MOUNT_POINT}/t.dat of=/dev/zero bs=512k count=16'
+        read_perf = self._get_test_perf(cmd_dd_read, unique_str='hsjG0miU')
+        s.pwl(f'Read  Speed: {read_perf}', 3, '', 'finish')
+
+    def _mount_disk(self):
+        gnd = s.GetNewDisk(SSH, VPLX_IP)
+        dev_name = gnd.get_disk_from_vplx()
+        if self._format(dev_name):
+            if self._mount(dev_name):
+                return True
+            # else:
+            #     s.pwce(f'Failed to mount device "{dev_name}"', 3, 2)
+        # else:
+        #     s.pwce(f'Failed to format device "{dev_name}"', 3, 2)
+
+    def io_test(self):
         time.sleep(0.5)
-        if test_result:
-            return self._get_dd_perf(test_result)
+        s.pwl('Start to format，write and read the LUN on Host', 0, s.get_oprt_id(), 'start')
+        self._mount_disk()
+        s.pwl(f'Start speed test', 2, '', 'start')
+        self._write_test()
+        self._read_test()
 
-    def read_test(self):
-        '''
-        Execute command for read test
-        '''
-        test_cmd = f'dd if={mount_point}/t.dat of=/dev/zero bs=512k count=16'
-        test_result = self.ssh.excute_command(test_cmd)
-        if test_result:
-            return self._get_dd_perf(test_result)
-
-    def get_test_perf(self):
-        '''
-        Calling method to read&write test
-        '''
-        write_perf = self.write_test()
-        print(f'write speed: {write_perf}')
-        time.sleep(0.5)
-        read_perf = self.read_test()
-        print(f'read speed: {read_perf}')
-
-    def start_test(self):
-        if not self.find_session:
-            self.iscsi_login()
-        dev_name = self.explore_disk()
-        mount_status = self.format_mount(dev_name)
-        if mount_status:
-            self.get_test_perf()
-        else:
-            s.pe(f'Device {dev_name} mount failed')
 
 
 if __name__ == "__main__":
-    test = HostTest(21)
-    command_result = '''[2:0:0:0]    cd/dvd  NECVMWar VMware SATA CD00 1.00  /dev/sr0
-    [32:0:0:0]   disk    VMware   Virtual disk     2.0   /dev/sda 
-    [33:0:0:15]  disk    LIO-ORG  res_lun_15       4.0   /dev/sdb 
-    [33:0:0:21]  disk    LIO-ORG  res_luntest_21   4.0   /dev/sdc '''
-    print(command_result)
+    pass
+  
