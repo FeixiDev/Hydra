@@ -26,8 +26,6 @@ class TestStorage:
     def setup_class(self):
         storage.init_telnet()
         self.storage = storage.Storage()
-        self.storage.id = 99
-        self.storage.str = 'pytest'
 
     def test_create_map(self):
         assert self.storage.create_map() == None
@@ -50,7 +48,7 @@ class TestStorage:
         assert self.storage._unmap_lun('pytest_99') == True
         self.storage._destroy_lun('pytest_99')
 
-    def test__destroy_lun(self):
+    def test_destroy_lun(self):
         self.storage._create_lun('pytest_99')
         assert self.storage._destroy_lun('pytest_99') == True
 

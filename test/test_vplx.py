@@ -8,11 +8,16 @@ import os
 import pytest
 
 
-vplx.init_ssh()
+def setup_module():
+    vplx.init_ssh()
 
 
 def test_init_ssh():
     assert vplx.SSH != None
+
+
+def test_rescan_after_remove():
+    assert vplx.rescan_after_remove() == None
 
 
 class TestDebugLog:
@@ -39,61 +44,77 @@ class TestDebugLog:
 class TestVplxDrbd:
 
     def setup_class(self):
-        self.drbd = vplx.VplxDrbd()
-        self.drbd.id = '99'
-        self.drbd.str = 'pytest'
-        logdb.prepare_db()
         self.stor = storage.Storage()
-        self.stor.id = '99'
-        self.stor.str = 'pytest'
         self.stor.create_map()
         s.scsi_rescan(vplx.SSH, 'n')
+        self.drbd = vplx.VplxDrbd()
 
-    def teardown_class(self):
-        self.stor._unmap_lun('pytest_99')
-        self.stor._destroy_lun('pytest_99')
+    # def teardown_class(self):
+    #     self.stor.del_luns(['pytest_99'])
 
     def test_prepare(self):
         self.drbd._prepare()
         assert vplx.SSH != None
 
-    def test_drbd_cfg(self):
-        self.drbd.prepare_config_file()
-        assert self.drbd.drbd_cfg() == True
+    def test_cfg(self):
+        assert self.drbd.cfg() == None
+        self.drbd._del('pytest_99')
 
     def test_add_config_file(self):
         assert self.drbd._add_config_file('pytest_99') == None
+        self.drbd._del_config('pytest_99')
 
-    #
     def test_create_config_file(self):
-        assert self.drbd._create_config_file() == None
+        netapp = '10.203.1.231'
+        blk_dev_name = s.GetNewDisk(vplx.SSH, netapp).get_disk_from_netapp()
+        assert self.drbd._create_config_file(blk_dev_name, 'pytest_99') == None
+        self.drbd._del_config('pytest_99')
 
     def test_init(self):
+        self.drbd._add_config_file('pytest_99')
         assert self.drbd._init('pytest_99') == True
+        self.drbd._del_config('pytest_99')
 
     def test_up(self):
+        self.drbd._add_config_file('pytest_99')
+        self.drbd._init('pytest_99')
         assert self.drbd._up('pytest_99') == True
+        self.drbd._del('pytest_99')
 
     def test_primary(self):
+        self.drbd._add_config_file('pytest_99')
+        self.drbd._init('pytest_99')
+        self.drbd._up('pytest_99')
         assert self.drbd._primary('pytest_99') == True
+        self.drbd._del('pytest_99')
 
     def test_status_verify(self):
+        self.drbd._add_config_file('pytest_99')
+        self.drbd._init('pytest_99')
+        self.drbd._up('pytest_99')
+        self.drbd._primary('pytest_99')
         assert self.drbd.status_verify('pytest_99') == True
+        self.drbd._del('pytest_99')
 
     def test_down(self):
+        self.drbd.cfg()
         assert self.drbd._down('pytest_99') == True
+        self.drbd._del_config('pytest_99')
 
     def test_del_config(self):
+        self.drbd._add_config_file('pytest_99')
         assert self.drbd._del_config('pytest_99') == True
 
     def test_get_all_cfgd_drbd(self):
         assert self.drbd.get_all_cfgd_drbd()
 
     def test_del(self):
+        self.drbd.cfg()
         assert self.drbd._del('pytest_99') == True
 
     def test_del_drbds(self):
-        assert self.drbd.del_drbds(['pytest_99']) == True
+        self.drbd.cfg()
+        assert self.drbd.del_drbds(['pytest_99']) == None
 
 
 class TestVplxCrm:

@@ -115,17 +115,17 @@ def test_glo_iqn_list():
 
 def test_get_cmd_debug_sys():
     assert 'echo -- date&time: >> testfolder/sys_info.log' in consts.get_cmd_debug_sys(
-        'testfolder', 'testhost')
+        'testfolder')
 
 
 def test_get_cmd_debug_drbd():
     assert 'drbdadm status >> testfolder/drbd.log' in consts.get_cmd_debug_drbd(
-        'testfolder', 'testhost')
+        'testfolder')
 
 
 def test_get_cmd_debug_crm():
     assert 'crm res show >> testfolder/crm.log' in consts.get_cmd_debug_crm(
-        'testfolder', 'testhost')
+        'testfolder')
 
 
 def test_get_cmd_debug_stor():

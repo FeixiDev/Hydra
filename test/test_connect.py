@@ -72,5 +72,4 @@ class TestConnTelnet:
         assert self.telnet._make_connect() == None
 
     def test_close(self):
-        pass
-        # assert self.telnet.close() == None
+        assert self.telnet.close() == None

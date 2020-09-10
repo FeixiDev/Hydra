@@ -2,6 +2,7 @@ import sundry
 import consts
 import connect
 import os
+import logdb
 
 
 VPLX_IP = '10.203.1.199'
@@ -22,9 +23,9 @@ def setup_module():
     SSH = connect.ConnSSH(HOST, PORT, USER, PASSWORD, TIMEOUT)
 
 
-def test_host_random_iqn():
+def test_pick_iqns_random():
     consts.set_glo_iqn_list(['test_iqn1', 'test_iqn2'])
-    assert sundry.host_random_iqn(2) == ['test_iqn1', 'test_iqn2']
+    assert sundry.pick_iqns_random(2) == ['test_iqn1', 'test_iqn2']
 
 
 def test_generate_iqn():
@@ -38,8 +39,8 @@ def test_generate_iqn_list():
                                      'iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1']
 
 
-def test_change_id_range_to_list():
-    assert sundry.change_id_range_to_list('2') == [2]
+def test_id_str_to_list():
+    assert sundry.id_str_to_list('2') == [2]
 
 
 def test_scsi_rescan():
@@ -48,8 +49,8 @@ def test_scsi_rescan():
     assert sundry.scsi_rescan(SSH, 'a') == True
 
 
-def test_get_lsscsi():
-    assert sundry.get_lsscsi(SSH, 'pytest', sundry.get_oprt_id())
+# def test_get_lsscsi():
+#     assert sundry.get_lsscsi(SSH, 'pytest', sundry.get_oprt_id())
 
 
 def test_re_search():
@@ -61,9 +62,9 @@ def test_get_ssh_cmd():
     assert result['rst'] == b'/root\n'
 
 
-def test_ex_telnet_cmd():
+def test_get_telnet_cmd():
     telnet = connect.ConnTelnet(NHOST, NPORT, NUSERNSME, NPASSWORD, TIMEOUT)
-    assert '/vol/esxi/' in sundry.ex_telnet_cmd(
+    assert '/vol/esxi/' in sundry.get_telnet_cmd(
         telnet, 'pytest', 'lun show', 'pytest')
 
 
@@ -114,16 +115,25 @@ def test_prt_log():
     assert sundry.prt_log('pytest', 3, 3) == None
 
 
-def test_pwe():
-    assert sundry.pwe('pytest', 3, 1) == None
+# def test_pwe():
+#     assert sundry.pwe('pytest', 2, 1) == None
 
 
-def test_pwce():
-    assert sundry.pwce('pytest', 3, 1) == None
+# def test_pwce():
+#     assert sundry.pwce('pytest', 2, 1) == None
 
 
-def test_handle_exception():
-    assert sundry.handle_exception() == None
+# def test_handle_exception():
+#     assert sundry.handle_exception() == None
+
+def test_get_answer():
+    consts.set_glo_rpl('yes')
+    logger = consts.glo_log()
+    logger.write_to_log('F', 'DATA', 'INPUT', 'pytest',
+                            'confirm deletion', 'n')
+    logdb.prepare_db()
+    assert sundry.get_answer('yes') == 'n'
+    consts.set_glo_rpl('no')
 
 
 class TestGetNewDisk:
