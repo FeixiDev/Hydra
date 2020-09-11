@@ -49,8 +49,8 @@ class TestVplxDrbd:
         s.scsi_rescan(vplx.SSH, 'n')
         self.drbd = vplx.VplxDrbd()
 
-    # def teardown_class(self):
-    #     self.stor.del_luns(['pytest_99'])
+    def teardown_class(self):
+        self.stor.del_luns(['pytest_99'])
 
     def test_prepare(self):
         self.drbd._prepare()
@@ -58,63 +58,64 @@ class TestVplxDrbd:
 
     def test_cfg(self):
         assert self.drbd.cfg() == None
-        self.drbd._del('pytest_99')
+        self.drbd._del('res_pytest_99')
 
     def test_add_config_file(self):
-        assert self.drbd._add_config_file('pytest_99') == None
-        self.drbd._del_config('pytest_99')
+        assert self.drbd._add_config_file('res_pytest_99') == None
+        self.drbd._del_config('res_pytest_99')
 
     def test_create_config_file(self):
         netapp = '10.203.1.231'
         blk_dev_name = s.GetNewDisk(vplx.SSH, netapp).get_disk_from_netapp()
-        assert self.drbd._create_config_file(blk_dev_name, 'pytest_99') == None
-        self.drbd._del_config('pytest_99')
+        assert self.drbd._create_config_file(blk_dev_name, 'res_pytest_99') == None
+        self.drbd._del_config('res_pytest_99')
 
+    #cfg 全局变量 无法传递
     def test_init(self):
-        self.drbd._add_config_file('pytest_99')
-        assert self.drbd._init('pytest_99') == True
-        self.drbd._del_config('pytest_99')
+        self.drbd._add_config_file('res_pytest_99')
+        assert self.drbd._init('res_pytest_99') == True
+        self.drbd._del_config('res_pytest_99')
 
     def test_up(self):
-        self.drbd._add_config_file('pytest_99')
-        self.drbd._init('pytest_99')
-        assert self.drbd._up('pytest_99') == True
-        self.drbd._del('pytest_99')
+        self.drbd._add_config_file('res_pytest_99')
+        self.drbd._init('res_pytest_99')
+        assert self.drbd._up('res_pytest_99') == True
+        self.drbd._del('res_pytest_99')
 
     def test_primary(self):
-        self.drbd._add_config_file('pytest_99')
-        self.drbd._init('pytest_99')
-        self.drbd._up('pytest_99')
-        assert self.drbd._primary('pytest_99') == True
-        self.drbd._del('pytest_99')
+        self.drbd._add_config_file('res_pytest_99')
+        self.drbd._init('res_pytest_99')
+        self.drbd._up('res_pytest_99')
+        assert self.drbd._primary('res_pytest_99') == True
+        self.drbd._del('res_pytest_99')
 
     def test_status_verify(self):
-        self.drbd._add_config_file('pytest_99')
-        self.drbd._init('pytest_99')
-        self.drbd._up('pytest_99')
-        self.drbd._primary('pytest_99')
-        assert self.drbd.status_verify('pytest_99') == True
-        self.drbd._del('pytest_99')
+        self.drbd._add_config_file('res_pytest_99')
+        self.drbd._init('res_pytest_99')
+        self.drbd._up('res_pytest_99')
+        self.drbd._primary('res_pytest_99')
+        assert self.drbd.status_verify('res_pytest_99') == True
+        self.drbd._del('res_pytest_99')
 
     def test_down(self):
         self.drbd.cfg()
-        assert self.drbd._down('pytest_99') == True
-        self.drbd._del_config('pytest_99')
+        assert self.drbd._down('res_pytest_99') == True
+        self.drbd._del_config('res_pytest_99')
 
     def test_del_config(self):
-        self.drbd._add_config_file('pytest_99')
-        assert self.drbd._del_config('pytest_99') == True
+        self.drbd._add_config_file('res_pytest_99')
+        assert self.drbd._del_config('res_pytest_99') == True
 
     def test_get_all_cfgd_drbd(self):
         assert self.drbd.get_all_cfgd_drbd()
 
     def test_del(self):
         self.drbd.cfg()
-        assert self.drbd._del('pytest_99') == True
+        assert self.drbd._del('res_pytest_99') == True
 
     def test_del_drbds(self):
         self.drbd.cfg()
-        assert self.drbd.del_drbds(['pytest_99']) == None
+        assert self.drbd.del_drbds(['res_pytest_99']) == None
 
 
 class TestVplxCrm:
@@ -131,7 +132,7 @@ class TestVplxCrm:
         s.generate_iqn(100)
 
     def teardown_class(self):
-        self.drbd._del('pytest_99')
+        self.drbd._del('res_pytest_99')
         self.stor._unmap_lun('pytest_99')
         self.stor._destroy_lun('pytest_99')
 
