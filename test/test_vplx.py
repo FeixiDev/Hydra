@@ -6,6 +6,8 @@ import storage
 import logdb
 import os
 import pytest
+import time
+import host_initiator
 
 
 def setup_module():
@@ -45,11 +47,13 @@ class TestVplxDrbd:
 
     def setup_class(self):
         self.stor = storage.Storage()
-        self.stor.create_map()
-        s.scsi_rescan(vplx.SSH, 'n')
         self.drbd = vplx.VplxDrbd()
 
-    def teardown_class(self):
+    def setup(self):
+        self.stor.create_map()
+        s.scsi_rescan(vplx.SSH, 'n')
+
+    def teardown(self):
         self.stor.del_luns(['pytest_99'])
 
     def test_prepare(self):
@@ -70,7 +74,6 @@ class TestVplxDrbd:
         assert self.drbd._create_config_file(blk_dev_name, 'res_pytest_99') == None
         self.drbd._del_config('res_pytest_99')
 
-    #cfg 全局变量 无法传递
     def test_init(self):
         self.drbd._add_config_file('res_pytest_99')
         assert self.drbd._init('res_pytest_99') == True
@@ -107,7 +110,7 @@ class TestVplxDrbd:
         assert self.drbd._del_config('res_pytest_99') == True
 
     def test_get_all_cfgd_drbd(self):
-        assert self.drbd.get_all_cfgd_drbd()
+        assert self.drbd.get_all_cfgd_drbd() != None
 
     def test_del(self):
         self.drbd.cfg()
@@ -121,80 +124,86 @@ class TestVplxDrbd:
 class TestVplxCrm:
 
     def setup_class(self):
-        self.crm = vplx.VplxCrm()
         self.stor = storage.Storage()
-        self.stor.id = '99'
-        self.stor.str = 'pytest'
         self.stor.create_map()
         s.scsi_rescan(vplx.SSH, 'n')
+        iqn1 = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
+        # host_initiator.init_ssh()
+        # host_initiator.change_iqn(iqn)
+        consts.set_glo_iqn_list([iqn1])
         self.drbd = vplx.VplxDrbd()
         self.drbd.cfg()
-        s.generate_iqn(100)
+        self.crm = vplx.VplxCrm()
 
     def teardown_class(self):
         self.drbd._del('res_pytest_99')
-        self.stor._unmap_lun('pytest_99')
-        self.stor._destroy_lun('pytest_99')
+        self.stor.del_luns(['pytest_99'])
 
     def test_cfg(self):
         assert self.crm.cfg() == True
 
     def test_modify_initiator_and_verify(self):
+        iqn2 = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-2"
+        consts.append_glo_iqn_list(iqn2)
         assert self.crm.modify_initiator_and_verify() == None
+        self.crm._del('res_pytest_99')
 
     def test_create(self):
-        assert self.crm._create() == True
+        assert self.crm._create('res_pytest_99') == True
 
     def test_set_col(self):
-        assert self.crm._setting_col() == True
+        assert self.crm._set_col('res_pytest_99') == True
 
     def test_set_order(self):
-        assert self.crm._setting_order() == True
+        assert self.crm._set_order('res_pytest_99') == True
 
     def test_set_portblock(self):
-        assert self.crm._set_portblock() == True
+        assert self.crm._set_portblock('res_pytest_99') == True
 
     def test_setting(self):
-        assert self.crm._setting() == True
+        self.crm._del_cof('res_pytest_99')
+        self.crm._create('res_pytest_99')
+        assert self.crm._setting('res_pytest_99') == True
 
     def test_start(self):
-        assert self.crm._crm_start() == True
+        assert self.crm._start('res_pytest_99') == True
 
     def test_status_verify(self):
-        assert self.crm._status_verifz() == True
+        assert self.crm._status_verify('res_pytest_99') == True
 
     def test_get_crm_status(self):
-        assert self.crm._get_crm_status() == True
+        assert self.crm._get_crm_status('res_pytest_99') != None
 
     def test_cyclic_check_crm_status(self):
-        assert self.crm._cyclic_check_crm_status() == True
+        assert self.crm._cyclic_check_crm_status('res_pytest_99', 'Started',6,100) == True
 
     def test_stop(self):
-        assert self.crm._stop() == True
+        assert self.crm._stop('res_pytest_99') == True
 
     def test_del_cof(self):
-        assert self.crm._del_cof() == True
+        assert self.crm._del_cof('res_pytest_99') == True
 
     def test_del(self):
-        assert self.crm._del() == True
+        self.crm.cfg()
+        assert self.crm._del('res_pytest_99') == True
 
     def test_get_all_cfgd_res(self):
+        self.crm.cfg()
         assert self.crm.get_all_cfgd_res()
 
     def test_del_crms(self):
-        assert self.crm.del_crms() == None
-
-    def test_vplx_rescan_r(self):
-        assert self.crm.vplx_rescan_r() == None
+        assert self.crm.del_crms(['res_pytest_99']) == None
 
     def test_modify_allow_initiator(self):
-        assert self.crm._modify_allow_initiator() == True
+        self.crm.cfg()
+        assert self.crm._modify_allow_initiator('res_pytest_99') == True
 
     def test_targetcli_verify(self):
         assert self.crm._targetcli_verify() == True
 
     def test_cyclic_check_crm_start(self):
-        assert self.crm._cyclic_check_crm_start() == True
+        assert self.crm._cyclic_check_crm_start('res_pytest_99', 6, 200) == True
 
     def test_crm_and_targetcli_verify(self):
-        assert self.crm._crm_and_targetcli_verify() == None
+        assert self.crm._crm_and_targetcli_verify('res_pytest_99') == None
+        self.crm._del('res_pytest_99')

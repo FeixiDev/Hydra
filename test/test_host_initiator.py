@@ -45,17 +45,13 @@ class TestHostTest:
     def setup_class(self):
         self.host = hi.HostTest()
         self.stor = storage.Storage()
-        self.stor.lun_create()
-        self.stor.lun_map()
-        hi.init_ssh()
-        s.scsi_rescan(hi.SSH, 'n')
+        self.stor.create_map()
+        s.scsi_rescan(vplx.SSH, 'n')
+        iqn1 = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
+        consts.set_glo_iqn_list([iqn1])
         self.drbd = vplx.VplxDrbd()
-        self.drbd.prepare_config_file()
-        self.drbd.drbd_cfg()
-        self.drbd.drbd_status_verify()
-        s.generate_iqn(100)
+        self.drbd.cfg()
         self.crm = vplx.VplxCrm()
-        self.crm.crm_cfg()
 
     # def teardown_class(self):
     #     self.drbd.drbd_del(self.drbd.res_name)
