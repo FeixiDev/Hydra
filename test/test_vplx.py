@@ -129,7 +129,7 @@ class TestVplxCrm:
         s.scsi_rescan(vplx.SSH, 'n')
         iqn1 = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
         # host_initiator.init_ssh()
-        # host_initiator.change_iqn(iqn)
+        # host_initiator.change_iqn(iqn1)
         consts.set_glo_iqn_list([iqn1])
         self.drbd = vplx.VplxDrbd()
         self.drbd.cfg()

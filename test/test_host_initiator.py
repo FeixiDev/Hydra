@@ -16,12 +16,14 @@ def test_umount_mnt():
     assert hi.umount_mnt() == None
 
 
-def test_find_new_disk():
-    assert hi._find_new_disk() == None
+def test_change_iqn():
+    hi.init_ssh()
+    iqn = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
+    assert hi.change_iqn(iqn) == None
 
 
-def test_get_disk_dev():
-    assert hi.get_disk_dev() == None
+def test_rescan_after_remove():
+    assert hi.rescan_after_remove() == None
 
 
 class TestDebugLog:
@@ -46,45 +48,54 @@ class TestHostTest:
         self.host = hi.HostTest()
         self.stor = storage.Storage()
         self.stor.create_map()
-        s.scsi_rescan(vplx.SSH, 'n')
         iqn1 = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
         consts.set_glo_iqn_list([iqn1])
         self.drbd = vplx.VplxDrbd()
         self.drbd.cfg()
         self.crm = vplx.VplxCrm()
+        self.crm.cfg()
+        hi.init_ssh()
+        iqn = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
+        hi.change_iqn(iqn)
+        VPLX_IP = '10.203.1.199'
+        gnd = s.GetNewDisk(hi.SSH, VPLX_IP)
+        self.dev_name = gnd.get_disk_from_vplx()
 
-    # def teardown_class(self):
-    #     self.drbd.drbd_del(self.drbd.res_name)
-    #     self.stor.lun_unmap('pytest_99')
-    #     self.stor.lun_destroy('pytest_99')
-
-    # def test_modify_host_iqn(self):
-    #     assert self.host._modify_host_iqn() == True
-
-    # def test_modify_iqn_and_restart(self):
-    #     assert self.host.modify_iqn_and_restart() == True
+    def teardown_class(self):
+        self.crm._del('res_pytest_99')
+        self.drbd._del('res_pytest_99')
+        self.stor.del_luns(['pytest_99'])
 
     def test_prepare(self):
         assert self.host._prepare() == None
 
     def test_mount(self):
-        dev = hi.get_disk_dev()
-        assert self.host._mount(dev) == True
+        self.host._format(self.dev_name)
+        assert self.host._mount(self.dev_name)
+        hi.umount_mnt()
 
     def test_judge_format(self):
-        assert self.host._judge_format() == True
+        string = 'done done done done'
+        assert self.host._judge_format(string) == True
 
     def test_format(self):
-        assert self.host.format() == True
+        assert self.host._format(self.dev_name) == True
 
-    def test_get_dd_perf(self):
-        assert self.host._get_dd_perf() == True
+    def test_mount_disk(self):
+        assert self.host._mount_disk() == True
 
     def test_get_test_perf(self):
-        assert self.host.get_test_perf() == True
+        mount_point = '/mnt'
+        cmd_dd_write = f'dd if=/dev/zero of={mount_point}/t.dat bs=512k count=16'
+        assert self.host._get_test_perf(cmd_dd_write, unique_str='CwS9LYk0')
 
-    def test_start_test(self):
-        assert self.host.start_test() == True
+    def test_write_test(self):
+        assert self.host._write_test() == None
 
-    def test_host_rescan_r(self):
-        assert self.host.host_rescan_r() == True
+    def test_read_test(self):
+        assert self.host._read_test() == None
+        hi.umount_mnt()
+
+    def test_io_test(self):
+        assert self.host.io_test() == None
+        hi.umount_mnt()
