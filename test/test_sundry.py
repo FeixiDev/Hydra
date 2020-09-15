@@ -3,6 +3,9 @@ import consts
 import connect
 import os
 import logdb
+import storage
+import vplx
+import host_initiator as hi
 
 
 VPLX_IP = '10.203.1.199'
@@ -21,6 +24,9 @@ NPASSWORD = 'Feixi@123'
 def setup_module():
     global SSH
     SSH = connect.ConnSSH(HOST, PORT, USER, PASSWORD, TIMEOUT)
+    logdb.prepare_db()
+    global VSSH
+    VSSH = connect.ConnSSH(VPLX_IP, PORT, USER, PASSWORD, TIMEOUT)
 
 
 def test_pick_iqns_random():
@@ -115,16 +121,21 @@ def test_prt_log():
     assert sundry.prt_log('pytest', 3, 3) == None
 
 
+# ##
 # def test_pwe():
 #     assert sundry.pwe('pytest', 2, 1) == None
 
 
+# ##
 # def test_pwce():
-#     assert sundry.pwce('pytest', 2, 1) == None
+#     consts.set_glo_rpl('yes')
+#     assert sundry.pwce('pytest', 2, 1) != None
 
 
+# ##
 # def test_handle_exception():
-#     assert sundry.handle_exception() == None
+#     assert sundry.handle_exception() != None
+
 
 def test_get_answer():
     consts.set_glo_rpl('yes')
@@ -139,21 +150,38 @@ def test_get_answer():
 class TestGetNewDisk:
 
     def setup_class(self):
-        consts.set_glo_id(0)
-        self.getdisk = sundry.GetNewDisk(SSH, NHOST)
+        self.stor = storage.Storage()
+        self.stor.create_map()
+        iqn1 = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
+        consts.set_glo_iqn_list([iqn1])
+        self.drbd = vplx.VplxDrbd()
+        self.drbd.cfg()
+        self.crm = vplx.VplxCrm()
+        self.crm.cfg()
+        hi.init_ssh()
+        hi.change_iqn(iqn1)
+        self.getdisk = sundry.GetNewDisk(SSH, VPLX_IP)
 
-    ##
+    def teardown_class(self):
+        self.crm._del('res_pytest_99')
+        self.drbd._del('res_pytest_99')
+        self.stor.del_luns(['pytest_99'])
+
     def test_get_disk_from_netapp(self):
-        assert self.getdisk.get_disk_from_netapp() == None
+        getdisk = sundry.GetNewDisk(VSSH, NHOST)
+        assert getdisk.get_disk_from_netapp() != None
 
     def test_get_disk_from_vplx(self):
-        assert self.getdisk.get_disk_from_vplx() == None
+        assert self.getdisk.get_disk_from_vplx() != None
 
     def test_find_new_disk(self):
-        assert self.getdisk.find_new_disk('VMware') == '/dev/sda'
+        assert self.getdisk._find_new_disk('LIO-ORG') == '/dev/sdc'
 
     def test_get_disk_dev(self):
-        assert self.getdisk.get_disk_dev('VMware') == '/dev/sda'
+        assert self.getdisk._get_disk_dev('LIO-ORG') == '/dev/sdc'
+
+    def test_get_lsscsi(self):
+        assert self.getdisk._get_lsscsi(SSH, 'D37nG6Yi', sundry.get_oprt_id()) != None
 
 
 class TestDebugLog:
@@ -180,26 +208,46 @@ class TestDebugLog:
 class TestIscsi:
 
     def setup_class(self):
+        self.stor = storage.Storage()
+        self.stor.create_map()
+        self.iqn = "iqn.1993-08.org.debian:01:2b129695b8bbmaxhost:99-1"
+        consts.set_glo_iqn_list([self.iqn])
+        self.drbd = vplx.VplxDrbd()
+        self.drbd.cfg()
+        self.crm = vplx.VplxCrm()
+        self.crm.cfg()
         self.iscsi = sundry.Iscsi(SSH, VPLX_IP)
-        self.iqn = 'iqn.2020-06.com.example:test-max-host'
+
+    def teardown_class(self):
+        self.crm._del('res_pytest_99')
+        self.drbd._del('res_pytest_99')
+        self.stor.del_luns(['pytest_99'])
 
     def test_create_session(self):
-        assert self.iscsi.create_session() == None
+        self.iscsi._end_session(TARGET_IQN)
+        assert self.iscsi.create_session() == True
 
-    def test_disconnect_session(self):
-        assert self.iscsi.disconnect_session(self.iqn) == True
+    def test_end_session(self):
+        self.iscsi.create_session()
+        assert self.iscsi._end_session(TARGET_IQN) == True
 
     def test_logout(self):
-        assert self.iscsi._logout(self.iqn) == True
+        self.iscsi.create_session()
+        assert self.iscsi._logout(TARGET_IQN) == True
 
     def test_login(self):
+        self.iscsi._end_session(TARGET_IQN)
         assert self.iscsi.login() == True
 
     def test_find_session(self):
         assert self.iscsi._find_session() == True
 
-    def test_restart_service(self):
-        assert self.iscsi.restart_service() == True
+    def test_modify_iqn(self):
+        assert self.iscsi.modify_iqn(self.iqn) == None
 
-    def test_modify_host_iqn(self):
-        assert self.iscsi.modify_host_iqn(self.iqn) == True
+    def test_restart_service(self):
+        assert self.iscsi._restart_service() == True
+
+    def test_modify_iqn_cfg_file(self):
+        assert self.iscsi._modify_iqn_cfg_file(self.iqn) == True
+
