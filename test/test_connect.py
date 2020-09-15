@@ -50,9 +50,6 @@ class TestConnSSH:
         os.remove('/tmp/pytest.txt')
         self.ssh.execute_command('rm /pytest.txt')
 
-    def test_close(self):
-        assert self.ssh.close() == None
-
 
 class TestConnTelnet:
 
@@ -71,5 +68,3 @@ class TestConnTelnet:
         self.telnet.telnet = telnetlib.Telnet()
         assert self.telnet._make_connect() == None
 
-    def test_close(self):
-        assert self.telnet.close() == None
