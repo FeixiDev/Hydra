@@ -1,37 +1,79 @@
-import main
+import subprocess
+import time
 
 
-class TestMyArgumentParser:
-
-    def setup_class(self):
-        self.ap = main.MyArgumentParser()
-
-    def test_parse_args(self):
-        pass
+def output(cmd):
+    cmds = 'python3 main.py %s' % cmd
+    output = subprocess.check_output(cmds, shell=True)
+    return output.decode()
 
 
-class TestHydraArgParse:
+def test_help():
+    out = output('')
+    assert 'arguments' in out
 
-    def setup_class(self):
-        self.hydra = main.HydraArgParse()
 
-    # def test_log_user_input(self):
-    # 	assert self.hydra.log_user_input() == None
+def test_lun():
+    out = output('lun -id 1 -s unittest')
+    assert out != None
+    out = output('lun -id 2 3 -s unittest')
+    assert out != None
 
-    # def test_argparse_init(self):
-    # 	assert self.hydra.argparse_init() == None
 
-    # def test_storage(self):
-    # 	assert self.hydra._storage() == None
+def test_iqn_o2n():
+    # out = output('iqn o2n')
+    pass
 
-    # def test_vplx_drbd(self):
-    # 	assert self.hydra._vplx_drbd() == None
 
-    # def test_vplx_crm(self):
-    # 	assert self.hydra._vplx_crm() == None
+def test_iqn_n2n():
+    out = output('iqn n2n -id 4 -c 2')
+    assert out != None
+    out = output('iqn n2n -id 5 6 -c 2')
+    assert out != None
 
-    # def test_host_test(self):
-    # 	assert self.hydra._host_test() == None
 
-    def test_start(self):
-        self.hydra.start()
+def test_iqn_n2n_n():
+    out = output('iqn n2n -id 7 -c 2 -n 1')
+    assert out != None
+    out = output('iqn n2n -id 8 9 -c 2 -n 1')
+    assert out != None
+
+
+def test_del():
+    cmd = 'python3 main.py del'
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+    time.sleep(3)
+    p.stdin.write(b'y')
+    stdout_data,stderr_data = p.communicate()
+    assert stdout_data != None
+
+
+def test_del_s():
+    output('lun -id 1 -s unittest')
+    cmd = 'python3 main.py del -s unittest'
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+    time.sleep(3)
+    p.stdin.write(b'y')
+    stdout_data,stderr_data = p.communicate()
+    assert stdout_data != None
+
+
+def test_del_id():
+    output('lun -id 2 -s unittest')
+    cmd = 'python3 main.py del -id 2'
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+    time.sleep(3)
+    p.stdin.write(b'y')
+    stdout_data,stderr_data = p.communicate()
+    assert stdout_data != None
+
+
+def test_del_s_id():
+    output('lun -id 2 -s unittest')
+    cmd = 'python3 main.py del -s unittest -id 2'
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True)
+    time.sleep(3)
+    p.stdin.write(b'y')
+    stdout_data,stderr_data = p.communicate()
+    assert stdout_data != None
+
