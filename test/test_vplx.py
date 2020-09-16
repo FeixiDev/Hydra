@@ -71,7 +71,8 @@ class TestVplxDrbd:
     def test_create_config_file(self):
         netapp = '10.203.1.231'
         blk_dev_name = s.GetNewDisk(vplx.SSH, netapp).get_disk_from_netapp()
-        assert self.drbd._create_config_file(blk_dev_name, 'res_pytest_99') == None
+        assert self.drbd._create_config_file(
+            blk_dev_name, 'res_pytest_99') == None
         self.drbd._del_config('res_pytest_99')
 
     def test_init(self):
@@ -175,7 +176,8 @@ class TestVplxCrm:
         assert self.crm._get_crm_status('res_pytest_99') != None
 
     def test_cyclic_check_crm_status(self):
-        assert self.crm._cyclic_check_crm_status('res_pytest_99', 'Started',6,100) == True
+        assert self.crm._cyclic_check_crm_status(
+            'res_pytest_99', 'Started', 6, 100) == True
 
     def test_stop(self):
         assert self.crm._stop('res_pytest_99') == True
@@ -202,7 +204,8 @@ class TestVplxCrm:
         assert self.crm._targetcli_verify() == True
 
     def test_cyclic_check_crm_start(self):
-        assert self.crm._cyclic_check_crm_start('res_pytest_99', 6, 200) == True
+        assert self.crm._cyclic_check_crm_start(
+            'res_pytest_99', 6, 200) == True
 
     def test_crm_and_targetcli_verify(self):
         assert self.crm._crm_and_targetcli_verify('res_pytest_99') == None

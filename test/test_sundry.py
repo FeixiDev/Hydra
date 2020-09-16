@@ -141,7 +141,7 @@ def test_get_answer():
     consts.set_glo_rpl('yes')
     logger = consts.glo_log()
     logger.write_to_log('F', 'DATA', 'INPUT', 'pytest',
-                            'confirm deletion', 'n')
+                        'confirm deletion', 'n')
     logdb.prepare_db()
     assert sundry.get_answer('yes') == 'n'
     consts.set_glo_rpl('no')
@@ -181,7 +181,8 @@ class TestGetNewDisk:
         assert self.getdisk._get_disk_dev('LIO-ORG') == '/dev/sdc'
 
     def test_get_lsscsi(self):
-        assert self.getdisk._get_lsscsi(SSH, 'D37nG6Yi', sundry.get_oprt_id()) != None
+        assert self.getdisk._get_lsscsi(
+            SSH, 'D37nG6Yi', sundry.get_oprt_id()) != None
 
 
 class TestDebugLog:
@@ -250,4 +251,3 @@ class TestIscsi:
 
     def test_modify_iqn_cfg_file(self):
         assert self.iscsi._modify_iqn_cfg_file(self.iqn) == True
-

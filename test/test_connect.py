@@ -67,4 +67,3 @@ class TestConnTelnet:
     def test_make_connect(self):
         self.telnet.telnet = telnetlib.Telnet()
         assert self.telnet._make_connect() == None
-

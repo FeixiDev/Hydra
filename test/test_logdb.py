@@ -34,7 +34,7 @@ class TestLogDB:
         self.logger = log.Log(self.tid)
         consts.set_glo_log(self.logger)
         self.logger.write_to_log('T', 'DATA', 'cmd', 'exception',
-                            '100', {'valid': '1', 'cmd': 'pytest'})
+                                 '100', {'valid': '1', 'cmd': 'pytest'})
         self.db = logdb.LogDB()
         logdb.prepare_db()
         sql = "SELECT id FROM logtable order by id desc"
