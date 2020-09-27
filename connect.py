@@ -82,12 +82,6 @@ class ConnSSH(object):
         except AttributeError as e:
             print(f'Upload file "{remotepath}" failed with error: {e}')
 
-    def close(self):
-        self.SSHConnection.close()
-        s.pwl(f'Close SSH connection to {self._host}')
-        # self.logger.write_to_log(
-        #     'T', 'INFO', 'info', 'finish', '', 'Close SSH connection')
-
 
 class ConnTelnet(object):
     '''
@@ -139,12 +133,6 @@ class ConnTelnet(object):
         if not self.telnet:
             s.pwl(f'Retry to connect {self._host} via Telnet', 2, '', 'start')
             self._connect()
-
-    def close(self):
-        self.telnet.close()
-        s.pwl(f'Close SSH connection to {self._host}', 2)
-        # self.logger.write_to_log(
-        #     'INFO', 'info', '', 'Close Telnet connection.')
 
 
 if __name__ == '__main__':
