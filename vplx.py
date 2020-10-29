@@ -75,8 +75,8 @@ class VplxDrbd(object):
         s.pwl('Start to configure DRDB resource and CRM resource on VersaPLX', 0, s.get_oprt_id(), 'start')
         s.pwl('Start to configure DRBD resource', 1, '', 'start')
         res_name = f'res_{self.str}_{self.id}'
-        global DRBD_DEV_NAME
-        DRBD_DEV_NAME = f'drbd{self.id}'
+        # global DRBD_DEV_NAME
+        # DRBD_DEV_NAME = f'drbd{self.id}'
         self._add_config_file(res_name)  # 创建配置文件
         self._init(res_name)
         self._up(res_name)
@@ -92,9 +92,10 @@ class VplxDrbd(object):
 
     def _create_config_file(self, blk_dev_name, res_name):
         s.pwl(f'Start to prepare DRBD config file "{res_name}.res"', 2, '', 'start')
+        drbd_dev_name = f'drbd{self.id}'
         context = [rf'resource {res_name} {{',
                    rf'\ \ \ \ on maxluntarget {{',
-                   rf'\ \ \ \ \ \ \ \ device /dev/{DRBD_DEV_NAME}\;',
+                   rf'\ \ \ \ \ \ \ \ device /dev/{drbd_dev_name}\;',
                    rf'\ \ \ \ \ \ \ \ disk {blk_dev_name}\;',
                    rf'\ \ \ \ \ \ \ \ address 10.203.1.199:7789\;',
                    rf'\ \ \ \ \ \ \ \ node-id 0\;',
@@ -308,9 +309,10 @@ class VplxCrm(object):
             s.pwe('Global IQN list is None',2,2)
         unique_str = 'LXYV7dft'
         s.pwl(f'Start to create iSCSILogicalUnit resource "{lu_name}"', 2, oprt_id, 'start')
+        drbd_dev_name = f'drbd{self.id}'
         cmd = f'crm conf primitive {lu_name} \
             iSCSILogicalUnit params target_iqn="{TARGET_IQN}" \
-            implementation=lio-t lun={consts.glo_id()} path="/dev/{DRBD_DEV_NAME}"\
+            implementation=lio-t lun={consts.glo_id()} path="/dev/{drbd_dev_name}"\
             allowed_initiators="{initiator_iqn}" op start timeout=600 interval=0 op stop timeout=600 interval=0 op monitor timeout=40 interval=50 meta target-role=Stopped'#40->600
         result = s.get_ssh_cmd(SSH, unique_str, cmd, oprt_id)
         if result:
